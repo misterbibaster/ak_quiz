@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Квиз по автоматам</title>
   <style>
     :root {
@@ -26,8 +26,10 @@
         radial-gradient(circle at 80% 0%, #23202f 0%, transparent 30%),
         var(--bg);
       color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
       padding: 20px;
-      overflow-y: auto;
     }
 
     body.modal-open {
@@ -36,7 +38,7 @@
 
     .app {
       width: min(980px, 100%);
-      min-height: calc(100vh - 40px);
+      height: calc(100vh - 40px);
       background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 20px;
@@ -44,7 +46,7 @@
       box-shadow: 0 14px 48px rgba(0,0,0,.35);
       display: flex;
       flex-direction: column;
-      margin: 0 auto;
+      overflow: hidden;
     }
 
     .title {
@@ -59,10 +61,7 @@
     }
 
     .meta {
-      margin: 0 0 10px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.84rem;
+      display: none;
     }
 
     .grid {
@@ -107,7 +106,7 @@
     .card img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       object-position: center;
       display: block;
       background: #0a0d13;
@@ -157,20 +156,12 @@
 
     .top-row {
       position: relative;
-      display: grid;
-      justify-items: center;
-      gap: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       margin: 0 0 14px;
       flex: 0 0 auto;
-      min-height: 36px;
-    }
-
-    .top-controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
+      min-height: 40px;
     }
 
     .modes {
@@ -183,22 +174,23 @@
     }
 
     .hint-btn {
+      position: absolute;
+      right: 0;
       border: 1px solid rgba(255,255,255,.22);
       background: rgba(255,255,255,.07);
       color: #f2f6ff;
-      padding: 6px 10px;
+      padding: 8px 14px;
       border-radius: 999px;
       cursor: pointer;
-      font-weight: 650;
-      font-size: .83rem;
+      font-weight: 700;
       white-space: nowrap;
     }
 
     .content-shell {
       flex: 1 1 auto;
-      min-height: auto;
-      overflow: visible;
-      padding-right: 0;
+      min-height: 0;
+      overflow: auto;
+      padding-right: 4px;
     }
 
     .fast-options {
@@ -207,28 +199,6 @@
       gap: 8px;
       flex-wrap: wrap;
       margin: 0 0 10px;
-    }
-
-    .mode-menu-btn {
-      border: 1px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.08);
-      color: #f5f8ff;
-      padding: 7px 12px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: .9rem;
-    }
-
-    .mode-menu {
-      width: min(680px, 100%);
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 14px;
-      background: rgba(15,18,24,.92);
-      backdrop-filter: blur(3px);
-      padding: 10px;
-      display: grid;
-      gap: 10px;
     }
 
     .fast-opt-btn {
@@ -326,13 +296,11 @@
       color: #eaf0ff;
       padding: 12px;
       text-align: left;
-      line-height: 1.3;
-      font-size: clamp(.78rem, 1.4vw, .95rem);
+      line-height: 1.35;
+      font-size: .95rem;
       cursor: pointer;
       transition: transform .12s ease, border-color .12s ease, background .12s ease;
-      min-height: 98px;
-      overflow-wrap: anywhere;
-      hyphens: auto;
+      min-height: 110px;
     }
 
     .desc-option:hover {
@@ -700,52 +668,95 @@
 
     .hidden { display: none !important; }
 
-    /* iPhone / mobile UX overrides */
-    body {
-      min-height: 100dvh;
-      padding: calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+    .mobile-controls,
+    .mobile-mode-menu,
+    .modal-edge-close {
+      display: none;
     }
 
-    .app {
-      min-height: calc(100dvh - 20px);
+    .mobile-menu-section {
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      padding: 10px;
     }
 
-    .content-shell,
-    .theory-modal {
-      -webkit-overflow-scrolling: touch;
+    .mobile-menu-section.fast {
+      border-color: rgba(246,195,73,.45);
+      background: rgba(246,195,73,.08);
     }
 
-    .mode-btn,
-    .hint-btn,
-    .fast-opt-btn,
-    .card,
-    .desc-option,
-    .theory-thumb,
-    .overlay-next,
-    .theory-close {
-      touch-action: manipulation;
+    .mobile-menu-label {
+      margin: 0 0 8px;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #c0c8db;
+    }
+
+    .mobile-menu-section.fast .mobile-menu-label {
+      color: #ffd98d;
     }
 
     @media (max-width: 880px) {
-      .title {
-        font-size: clamp(1.3rem, 7vw, 2.2rem);
-        margin-bottom: 8px;
-      }
-
-      .meta {
-        font-size: .88rem;
-        margin-bottom: 10px;
+      body {
+        display: block;
+        min-height: 100dvh;
+        padding: calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+        overflow-y: auto;
       }
 
       .app {
         min-height: calc(100dvh - 12px);
+        height: auto;
+        overflow: visible;
         padding: 12px;
         border-radius: 16px;
       }
 
-      .top-row {
-        margin-bottom: 8px;
-        gap: 6px;
+      .top-row,
+      #fastOptions {
+        display: none;
+      }
+
+      .mobile-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .mobile-mode-trigger {
+        border: 1px solid rgba(255,255,255,.22);
+        background: rgba(255,255,255,.08);
+        color: #f5f8ff;
+        padding: 8px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: .86rem;
+      }
+
+      .mobile-hint-btn {
+        position: static;
+        right: auto;
+        width: auto;
+        margin-top: 0;
+        padding: 7px 10px;
+        font-size: .8rem;
+      }
+
+      .mobile-mode-menu {
+        display: grid;
+        gap: 8px;
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 14px;
+        background: rgba(15,18,24,.92);
+        backdrop-filter: blur(3px);
+        padding: 10px;
+        margin-bottom: 10px;
       }
 
       .modes {
@@ -761,21 +772,11 @@
         padding: 9px 8px;
       }
 
-      .mode-menu-btn {
-        font-size: .85rem;
-        padding: 7px 10px;
-      }
-
-      .hint-btn {
-        padding: 6px 10px;
-        font-size: .78rem;
-      }
-
       .fast-options {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
-        margin-bottom: 0;
+        margin: 0;
       }
 
       .fast-opt-btn {
@@ -783,6 +784,12 @@
         min-height: 36px;
         padding: 8px 6px;
         font-size: .8rem;
+      }
+
+      .content-shell {
+        min-height: auto;
+        overflow: visible;
+        padding-right: 0;
       }
 
       .controls {
@@ -806,12 +813,25 @@
 
       .card {
         border-radius: 10px;
-        aspect-ratio: 1 / 1;
+        aspect-ratio: 16 / 10;
+      }
+
+      .card img {
+        background: linear-gradient(180deg, #13192a, #0f1523);
       }
 
       .desc-grid,
       .theory-grid {
         grid-template-columns: 1fr;
+      }
+
+      .desc-option {
+        font-size: .82rem;
+        line-height: 1.28;
+        min-height: 88px;
+        padding: 10px;
+        overflow-wrap: anywhere;
+        hyphens: auto;
       }
 
       .theory-desc {
@@ -821,6 +841,7 @@
 
       .theory-modal {
         padding: calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));
+        -webkit-overflow-scrolling: touch;
       }
 
       .theory-modal-card {
@@ -830,6 +851,26 @@
 
       .theory-modal .theory-image {
         max-height: 160px;
+      }
+
+      .modal-edge-close {
+        display: block;
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        width: 34px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        z-index: 1;
+      }
+
+      .modal-edge-close.left {
+        left: 0;
+      }
+
+      .modal-edge-close.right {
+        right: 0;
       }
 
       .overlay {
@@ -882,40 +923,53 @@
       .theory-modal-card {
         width: min(92vw, 820px);
       }
-      .desc-option {
-        font-size: .82rem;
-        min-height: 88px;
-        padding: 10px;
-      }
     }
   </style>
 </head>
 <body>
   <main class="app">
     <h1 class="title" id="question">Загрузка…</h1>
-    <p class="meta hidden" id="meta"></p>
-    <div class="top-row">
-      <div class="top-controls">
-        <button class="mode-menu-btn" id="modeMenuBtn" type="button">Режим: Обучение</button>
-        <button class="hint-btn" id="hintBtn" type="button">Подсказка</button>
-      </div>
-      <div class="mode-menu hidden" id="modeMenu">
+    <p class="meta" id="meta">Выбери фото, которое соответствует названию сверху (всегда 4 варианта)</p>
+    <div class="mobile-controls">
+      <button class="mobile-mode-trigger" id="mobileModeTrigger" type="button">Режим: Обучение</button>
+      <button class="hint-btn mobile-hint-btn" id="mobileHintBtn" type="button">Подсказка</button>
+    </div>
+    <div class="mobile-mode-menu hidden" id="mobileModeMenu">
+      <div class="mobile-menu-section">
+        <p class="mobile-menu-label">Режимы игры</p>
         <div class="modes">
-          <button class="mode-btn" id="modeFast" type="button">На скорость</button>
-          <button class="mode-btn active" id="modeLearn" type="button">Обучение</button>
-          <button class="mode-btn" id="modeDesc" type="button">Отличия</button>
-          <button class="mode-btn" id="modeTheory" type="button">Теория</button>
+          <button class="mode-btn" id="mobileModeFast" type="button">На скорость</button>
+          <button class="mode-btn" id="mobileModeLearn" type="button">Обучение</button>
+          <button class="mode-btn" id="mobileModeDesc" type="button">Отличия</button>
+          <button class="mode-btn" id="mobileModeTheory" type="button">Теория</button>
         </div>
+      </div>
+      <div class="mobile-menu-section fast hidden" id="mobileFastWrap">
+        <p class="mobile-menu-label">Режимы на скорость</p>
+        <div class="fast-options">
+          <button class="fast-opt-btn" id="mobileFastMinute" type="button">За минуту</button>
+          <button class="fast-opt-btn" id="mobileFastClassic" type="button">Классика 7с</button>
+          <button class="fast-opt-btn" id="mobileFastSudden" type="button">До ошибки</button>
+        </div>
+      </div>
+    </div>
+    <div class="top-row">
+      <div class="modes">
+        <button class="mode-btn" id="modeFast" type="button">1) На скорость</button>
+        <button class="mode-btn active" id="modeLearn" type="button">2) Обучение</button>
+        <button class="mode-btn" id="modeDesc" type="button">3) Отличия</button>
+        <button class="mode-btn" id="modeTheory" type="button">4) Теория</button>
+      </div>
+      <button class="hint-btn" id="hintBtn" type="button">Подсказка</button>
+    </div>
+
+    <div class="content-shell">
+      <div id="quizSection">
         <div class="fast-options hidden" id="fastOptions">
           <button class="fast-opt-btn active" id="fastOptMinute" type="button">За минуту</button>
           <button class="fast-opt-btn" id="fastOptClassic" type="button">Классика 7с</button>
           <button class="fast-opt-btn" id="fastOptSudden" type="button">До ошибки</button>
         </div>
-      </div>
-    </div>
-
-    <div class="content-shell">
-      <div id="quizSection">
         <section class="grid" id="answers"></section>
         <div class="wrong-hint" id="wrongHint"></div>
         <div class="fast-summary hidden" id="fastSummary">
@@ -937,6 +991,8 @@
     </div>
   </main>
   <div class="theory-modal" id="theoryModal">
+    <button class="modal-edge-close left" id="theoryEdgeLeft" type="button" aria-label="Закрыть подсказку"></button>
+    <button class="modal-edge-close right" id="theoryEdgeRight" type="button" aria-label="Закрыть подсказку"></button>
     <div class="theory-modal-card" id="theoryModalCard">
       <div class="theory-modal-top">
         <h2 class="theory-modal-title">Подсказка: Теория</h2>
@@ -1226,12 +1282,23 @@
     const $modeLearn = document.getElementById("modeLearn");
     const $modeDesc = document.getElementById("modeDesc");
     const $modeTheory = document.getElementById("modeTheory");
-    const $modeMenuBtn = document.getElementById("modeMenuBtn");
-    const $modeMenu = document.getElementById("modeMenu");
     const $hintBtn = document.getElementById("hintBtn");
+    const $mobileModeTrigger = document.getElementById("mobileModeTrigger");
+    const $mobileHintBtn = document.getElementById("mobileHintBtn");
+    const $mobileModeMenu = document.getElementById("mobileModeMenu");
+    const $mobileFastWrap = document.getElementById("mobileFastWrap");
+    const $mobileModeFast = document.getElementById("mobileModeFast");
+    const $mobileModeLearn = document.getElementById("mobileModeLearn");
+    const $mobileModeDesc = document.getElementById("mobileModeDesc");
+    const $mobileModeTheory = document.getElementById("mobileModeTheory");
+    const $mobileFastMinute = document.getElementById("mobileFastMinute");
+    const $mobileFastClassic = document.getElementById("mobileFastClassic");
+    const $mobileFastSudden = document.getElementById("mobileFastSudden");
     const $quizSection = document.getElementById("quizSection");
     const $theorySection = document.getElementById("theorySection");
     const $theoryModal = document.getElementById("theoryModal");
+    const $theoryEdgeLeft = document.getElementById("theoryEdgeLeft");
+    const $theoryEdgeRight = document.getElementById("theoryEdgeRight");
     const $theoryModalCard = document.getElementById("theoryModalCard");
     const $theoryClose = document.getElementById("theoryClose");
     const $theoryGridMain = document.getElementById("theoryGridMain");
@@ -1244,6 +1311,7 @@
     const $overlayDesc = document.getElementById("overlayDesc");
     const $overlayNext = document.getElementById("overlayNext");
     const $zoomView = document.getElementById("zoomView");
+    const $zoomCard = document.getElementById("zoomCard");
     const $zoomTitle = document.getElementById("zoomTitle");
     const $zoomImage = document.getElementById("zoomImage");
     const $zoomDesc = document.getElementById("zoomDesc");
@@ -1270,15 +1338,17 @@
     let fastTimeLeft = FAST_ROUND_SECONDS;
     let zoomImages = [];
     let zoomImageIndex = 0;
+    let zoomTouchStartX = null;
     const weaponImageCursor = new Map();
     const modeOrder = ["fast", "learn", "desc", "theory"];
-    const modeLabelById = {
+    const mobileMediaQuery = window.matchMedia("(max-width: 880px)");
+    const modeLabelMap = {
       fast: "На скорость",
       learn: "Обучение",
       desc: "Отличия",
       theory: "Теория"
     };
-    const fastVariantLabelById = {
+    const fastVariantLabelMap = {
       minute: "За минуту",
       classic: "Классика 7с",
       sudden: "До ошибки"
@@ -1507,27 +1577,31 @@
       setMode(modeOrder[nextIndex]);
     }
 
-    function updateModeMenuLabel() {
-      let label = `Режим: ${modeLabelById[mode] || "Обучение"}`;
-      if (mode === "fast") {
-        label += ` (${fastVariantLabelById[fastVariant] || "За минуту"})`;
+    function isMobileViewport() {
+      return mobileMediaQuery.matches;
+    }
+
+    function closeMobileModeMenu() {
+      $mobileModeMenu.classList.add("hidden");
+    }
+
+    function syncMobileControls() {
+      const fast = mode === "fast";
+      const theory = mode === "theory";
+      $mobileFastWrap.classList.toggle("hidden", !fast);
+      $mobileHintBtn.classList.toggle("hidden", fast || theory);
+      $mobileModeFast.classList.toggle("active", fast);
+      $mobileModeLearn.classList.toggle("active", mode === "learn");
+      $mobileModeDesc.classList.toggle("active", mode === "desc");
+      $mobileModeTheory.classList.toggle("active", theory);
+      $mobileFastMinute.classList.toggle("active", fastVariant === "minute");
+      $mobileFastClassic.classList.toggle("active", fastVariant === "classic");
+      $mobileFastSudden.classList.toggle("active", fastVariant === "sudden");
+      let label = `Режим: ${modeLabelMap[mode] || "Обучение"}`;
+      if (fast) {
+        label += ` (${fastVariantLabelMap[fastVariant] || "За минуту"})`;
       }
-      $modeMenuBtn.textContent = label;
-    }
-
-    function openModeMenu() {
-      $modeMenu.classList.remove("hidden");
-      $modeMenuBtn.setAttribute("aria-expanded", "true");
-    }
-
-    function closeModeMenu() {
-      $modeMenu.classList.add("hidden");
-      $modeMenuBtn.setAttribute("aria-expanded", "false");
-    }
-
-    function toggleModeMenu() {
-      if ($modeMenu.classList.contains("hidden")) openModeMenu();
-      else closeModeMenu();
+      $mobileModeTrigger.textContent = label;
     }
 
     function openTheoryModal() {
@@ -1598,7 +1672,7 @@
       $fastOptMinute.classList.toggle("active", fastVariant === "minute");
       $fastOptClassic.classList.toggle("active", fastVariant === "classic");
       $fastOptSudden.classList.toggle("active", fastVariant === "sudden");
-      updateModeMenuLabel();
+      syncMobileControls();
       if (mode === "fast") {
         startFastRun();
       }
@@ -1683,26 +1757,25 @@
       $modeLearn.classList.toggle("active", mode === "learn");
       $modeDesc.classList.toggle("active", desc);
       $modeTheory.classList.toggle("active", theory);
-      $hintBtn.classList.toggle("hidden", theory);
+      $hintBtn.classList.toggle("hidden", theory || (isMobileViewport() && fast));
       $fastOptions.classList.toggle("hidden", !fast);
       $timerPill.classList.toggle("hidden", !fast);
       $quizSection.classList.toggle("hidden", theory);
       $theorySection.classList.toggle("hidden", !theory);
-      updateModeMenuLabel();
+      syncMobileControls();
       if (!fast) {
         hideFastSummary();
       }
 
       if (mode === "fast" || mode === "learn") {
-        $meta.textContent = "";
+        $meta.textContent = "Выбери фото, которое соответствует названию сверху (всегда 4 варианта)";
       } else if (mode === "desc") {
-        $meta.textContent = "Режим: отличия по тексту";
+        $meta.textContent = "Выбери правильное описание отличий (1 из 4)";
       } else if (mode === "theory") {
-        $meta.textContent = "Теория";
+        $meta.textContent = "Теория по автоматам";
       } else {
-        $meta.textContent = "";
+        $meta.textContent = "Режим обучения";
       }
-      $meta.classList.toggle("hidden", !$meta.textContent.trim());
 
       if (fast) {
         startFastRun();
@@ -1921,28 +1994,47 @@
       $modeLearn.addEventListener("click", () => setMode("learn"));
       $modeDesc.addEventListener("click", () => setMode("desc"));
       $modeTheory.addEventListener("click", () => setMode("theory"));
-      $modeMenuBtn.addEventListener("click", (event) => {
+      $mobileModeTrigger.addEventListener("click", (event) => {
         event.stopPropagation();
-        toggleModeMenu();
+        $mobileModeMenu.classList.toggle("hidden");
       });
-      $modeMenu.addEventListener("click", (event) => {
-        event.stopPropagation();
-      });
-      document.addEventListener("click", () => {
-        closeModeMenu();
-      });
-      [$modeFast, $modeLearn, $modeDesc, $modeTheory, $fastOptMinute, $fastOptClassic, $fastOptSudden].forEach((el) => {
-        el.addEventListener("click", () => closeModeMenu());
-      });
+      $mobileHintBtn.addEventListener("click", openTheoryModal);
+      $mobileModeFast.addEventListener("click", () => setMode("fast"));
+      $mobileModeLearn.addEventListener("click", () => setMode("learn"));
+      $mobileModeDesc.addEventListener("click", () => setMode("desc"));
+      $mobileModeTheory.addEventListener("click", () => setMode("theory"));
+      $mobileFastMinute.addEventListener("click", () => setFastVariant("minute"));
+      $mobileFastClassic.addEventListener("click", () => setFastVariant("classic"));
+      $mobileFastSudden.addEventListener("click", () => setFastVariant("sudden"));
       $hintBtn.addEventListener("click", openTheoryModal);
       $theoryClose.addEventListener("click", closeTheoryModal);
+      $theoryEdgeLeft.addEventListener("click", closeTheoryModal);
+      $theoryEdgeRight.addEventListener("click", closeTheoryModal);
       $theoryModal.addEventListener("click", (event) => {
         if (event.target === $theoryModal) closeTheoryModal();
       });
       $theoryModalCard.addEventListener("click", (event) => {
         event.stopPropagation();
       });
-      $zoomView.addEventListener("click", closeZoomView);
+      $zoomView.addEventListener("click", (event) => {
+        if (event.target === $zoomView) closeZoomView();
+      });
+      $zoomCard.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      $zoomView.addEventListener("touchstart", (event) => {
+        if (!$zoomView.classList.contains("show")) return;
+        zoomTouchStartX = event.changedTouches[0].clientX;
+      }, { passive: true });
+      $zoomView.addEventListener("touchend", (event) => {
+        if (!$zoomView.classList.contains("show") || zoomTouchStartX === null) return;
+        const endX = event.changedTouches[0].clientX;
+        const deltaX = endX - zoomTouchStartX;
+        zoomTouchStartX = null;
+        if (Math.abs(deltaX) < 40) return;
+        if (deltaX < 0) cycleZoomImage(1);
+        else cycleZoomImage(-1);
+      }, { passive: true });
       $fastOptMinute.addEventListener("click", () => setFastVariant("minute"));
       $fastOptClassic.addEventListener("click", () => setFastVariant("classic"));
       $fastOptSudden.addEventListener("click", () => setFastVariant("sudden"));
@@ -1969,7 +2061,6 @@
         else if (event.key === "3") setMode("desc");
         else if (event.key === "4") setMode("theory");
         else if (event.key === "Escape") {
-          closeModeMenu();
           closeZoomView();
           closeTheoryModal();
         }
@@ -1981,6 +2072,22 @@
         }
         else return;
         event.preventDefault();
+      });
+      document.addEventListener("click", () => {
+        if (!isMobileViewport()) return;
+        closeMobileModeMenu();
+      });
+      $mobileModeMenu.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      [$mobileModeFast, $mobileModeLearn, $mobileModeDesc, $mobileModeTheory, $mobileFastMinute, $mobileFastClassic, $mobileFastSudden].forEach((el) => {
+        el.addEventListener("click", () => {
+          if (isMobileViewport()) closeMobileModeMenu();
+        });
+      });
+      mobileMediaQuery.addEventListener("change", () => {
+        closeMobileModeMenu();
+        syncMobileControls();
       });
       setMode("theory");
     }

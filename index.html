@@ -819,14 +819,7 @@
       }
 
       .mobile-mode-top {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        left: 0;
-        width: auto;
-        max-width: 40vw;
-        padding: 6px 10px;
+        display: none !important;
       }
 
       .mobile-mode-menu {
@@ -1763,13 +1756,12 @@
 
     function syncMobileControls() {
       const fast = mode === "fast";
-      const theory = mode === "theory";
       const mobile = isMobileViewport();
-      $mobileModeMenu.classList.toggle("from-top", theory);
+      const theory = mode === "theory";
       $mobileFastWrap.classList.toggle("hidden", !fast);
       $mobileHintBtn.classList.toggle("hidden", fast || theory);
-      $mobileModeTrigger.classList.toggle("hidden", !mobile || theory);
-      $mobileModeTop.classList.toggle("hidden", !mobile || !theory);
+      $mobileModeTrigger.classList.toggle("hidden", !mobile);
+      $mobileModeTop.classList.add("hidden");
       $roundPill.classList.toggle("hidden", mobile);
       $mobileModeFast.classList.toggle("active", fast);
       $mobileModeLearn.classList.toggle("active", mode === "learn");
@@ -1778,9 +1770,9 @@
       $mobileFastMinute.classList.toggle("active", fastVariant === "minute");
       $mobileFastClassic.classList.toggle("active", fastVariant === "classic");
       $mobileFastSudden.classList.toggle("active", fastVariant === "sudden");
-      const label = modeLabelMap[mode] || "Обучение";
+      const label = modeLabelMap[mode] || "Обучающий";
       $mobileModeTrigger.textContent = label;
-      $mobileModeTop.textContent = "Теория";
+      $mobileModeTop.textContent = label;
 
       if (mobile) {
         const controls = $scorePill.parentElement;
@@ -2197,10 +2189,6 @@
       $modeDesc.addEventListener("click", () => setMode("desc"));
       $modeTheory.addEventListener("click", () => setMode("theory"));
       $mobileModeTrigger.addEventListener("click", (event) => {
-        event.stopPropagation();
-        $mobileModeMenu.classList.toggle("hidden");
-      });
-      $mobileModeTop.addEventListener("click", (event) => {
         event.stopPropagation();
         $mobileModeMenu.classList.toggle("hidden");
       });

@@ -1486,6 +1486,7 @@
 
     const FAST_ROUND_SECONDS = 7;
     const FAST_MINUTE_SECONDS = 60;
+    const ANSWER_FEEDBACK_MS = 520;
 
     let mode = "learn";
     let fastVariant = "minute";
@@ -2027,7 +2028,7 @@
           if (fastTimeLeft > 0) {
             fastTimeoutId = setTimeout(() => {
               if (fastRunActive) nextQuestion();
-            }, 220);
+            }, ANSWER_FEEDBACK_MS);
           }
           return;
         }
@@ -2042,7 +2043,7 @@
           updateScorePill();
           fastTimeoutId = setTimeout(() => {
             if (fastRunActive) nextQuestion();
-          }, 650);
+          }, ANSWER_FEEDBACK_MS);
           return;
         }
 
@@ -2055,7 +2056,7 @@
         updateScorePill();
         fastTimeoutId = setTimeout(() => {
           if (fastRunActive) nextQuestion();
-        }, 900);
+        }, Math.max(ANSWER_FEEDBACK_MS, 700));
         return;
       }
 
@@ -2067,7 +2068,7 @@
         updateScorePill();
         fastTimeoutId = setTimeout(() => {
           nextQuestion();
-        }, 1200);
+        }, ANSWER_FEEDBACK_MS);
         return;
       }
 

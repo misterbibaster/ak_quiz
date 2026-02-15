@@ -683,6 +683,10 @@
       display: none;
     }
 
+    .mobile-mode-top {
+      display: none;
+    }
+
     .mobile-menu-section {
       border: 1px solid rgba(255,255,255,.14);
       border-radius: 12px;
@@ -779,6 +783,14 @@
         font-size: .95rem;
         font-weight: 800;
         line-height: 1;
+      }
+
+      .mobile-mode-top {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        left: 0;
       }
 
       .mobile-mode-menu {
@@ -1019,6 +1031,7 @@
 <body>
   <main class="app">
     <div class="mobile-header-row">
+      <button class="mobile-mode-trigger mobile-mode-top hidden" id="mobileModeTop" type="button">Теория</button>
       <h1 class="title" id="question">Загрузка…</h1>
       <button class="hint-btn mobile-hint-btn" id="mobileHintBtn" type="button" aria-label="Подсказка">?</button>
     </div>
@@ -1374,6 +1387,7 @@
     const $modeDesc = document.getElementById("modeDesc");
     const $modeTheory = document.getElementById("modeTheory");
     const $hintBtn = document.getElementById("hintBtn");
+    const $mobileModeTop = document.getElementById("mobileModeTop");
     const $mobileModeTrigger = document.getElementById("mobileModeTrigger");
     const $mobileHintBtn = document.getElementById("mobileHintBtn");
     const $mobileModeMenu = document.getElementById("mobileModeMenu");
@@ -1682,7 +1696,8 @@
       const mobile = isMobileViewport();
       $mobileFastWrap.classList.toggle("hidden", !fast);
       $mobileHintBtn.classList.toggle("hidden", fast || theory);
-      $mobileModeTrigger.classList.toggle("hidden", !mobile);
+      $mobileModeTrigger.classList.toggle("hidden", !mobile || theory);
+      $mobileModeTop.classList.toggle("hidden", !mobile || !theory);
       $roundPill.classList.toggle("hidden", mobile);
       $mobileModeFast.classList.toggle("active", fast);
       $mobileModeLearn.classList.toggle("active", mode === "learn");
@@ -1696,6 +1711,14 @@
         label = `${modeLabelMap[mode] || "На скорость"} · ${fastVariantLabelMap[fastVariant] || "За минуту"}`;
       }
       $mobileModeTrigger.textContent = label;
+      $mobileModeTop.textContent = label;
+    }
+
+    function setTheoryHeadline() {
+      const weapon = weapons[randomInt(weapons.length)];
+      if (weapon && weapon.name) {
+        $question.textContent = weapon.name;
+      }
     }
 
     function openTheoryModal() {
@@ -1867,6 +1890,7 @@
         $meta.textContent = "Выбери правильное описание отличий (1 из 4)";
       } else if (mode === "theory") {
         $meta.textContent = "Теория по автоматам";
+        setTheoryHeadline();
       } else {
         $meta.textContent = "Режим обучения";
       }
@@ -2089,6 +2113,10 @@
       $modeDesc.addEventListener("click", () => setMode("desc"));
       $modeTheory.addEventListener("click", () => setMode("theory"));
       $mobileModeTrigger.addEventListener("click", (event) => {
+        event.stopPropagation();
+        $mobileModeMenu.classList.toggle("hidden");
+      });
+      $mobileModeTop.addEventListener("click", (event) => {
         event.stopPropagation();
         $mobileModeMenu.classList.toggle("hidden");
       });

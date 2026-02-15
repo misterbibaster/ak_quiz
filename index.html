@@ -325,6 +325,10 @@
       min-height: 110px;
     }
 
+    .desc-option:focus {
+      outline: none;
+    }
+
     .desc-option:hover {
       transform: translateY(-1px);
       border-color: rgba(246,195,73,.6);
@@ -991,6 +995,12 @@
         hyphens: auto;
       }
 
+      .desc-option:hover {
+        transform: none;
+        border-color: rgba(255,255,255,.18);
+        background: rgba(255,255,255,.05);
+      }
+
       .theory-desc {
         font-size: .86rem;
         line-height: 1.28;
@@ -1103,8 +1113,8 @@
         <p class="mobile-menu-label">Режимы игры</p>
         <div class="modes">
           <button class="mode-btn" id="mobileModeFast" type="button">На скорость</button>
-          <button class="mode-btn" id="mobileModeLearn" type="button">Обучение</button>
-          <button class="mode-btn" id="mobileModeDesc" type="button">Отличия</button>
+          <button class="mode-btn" id="mobileModeLearn" type="button">Обучающий</button>
+          <button class="mode-btn" id="mobileModeDesc" type="button">Описание</button>
           <button class="mode-btn" id="mobileModeTheory" type="button">Теория</button>
         </div>
       </div>
@@ -1120,8 +1130,8 @@
     <div class="top-row">
       <div class="modes">
         <button class="mode-btn" id="modeFast" type="button">1) На скорость</button>
-        <button class="mode-btn active" id="modeLearn" type="button">2) Обучение</button>
-        <button class="mode-btn" id="modeDesc" type="button">3) Отличия</button>
+        <button class="mode-btn active" id="modeLearn" type="button">2) Обучающий</button>
+        <button class="mode-btn" id="modeDesc" type="button">3) Описание</button>
         <button class="mode-btn" id="modeTheory" type="button">4) Теория</button>
       </div>
       <button class="hint-btn" id="hintBtn" type="button">Подсказка</button>
@@ -1144,7 +1154,7 @@
 
         <div class="controls">
           <div class="pill hidden" id="roundPill">Раунд: <span id="round">0</span></div>
-          <button class="pill mode-pill hidden" id="mobileModeTrigger" type="button">Обучение</button>
+          <button class="pill mode-pill hidden" id="mobileModeTrigger" type="button">Обучающий</button>
           <div class="pill" id="scorePill">Верно: <span id="score">0 из 0</span></div>
           <div class="pill hidden" id="timerPill">Таймер: <span id="timer">0</span>с</div>
         </div>
@@ -1510,8 +1520,8 @@
     const mobileMediaQuery = window.matchMedia("(max-width: 880px)");
     const modeLabelMap = {
       fast: "На скорость",
-      learn: "Обучение",
-      desc: "Отличия",
+      learn: "Обучающий",
+      desc: "Описание",
       theory: "Теория"
     };
     const fastVariantLabelMap = {
@@ -1981,6 +1991,9 @@
 
     function handleAnswer(card, clickedCorrect, timedOut = false) {
       if (locked) return;
+      if (card && typeof card.blur === "function") {
+        card.blur();
+      }
       if (mode === "learn" && !clickedCorrect) {
         if (card) card.classList.add("wrong");
         $wrongHint.innerHTML = `Подсказка: ${emphasizeDescriptionHtml(currentCorrectWeapon.description, currentCorrectWeapon.name)}`;

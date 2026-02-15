@@ -1,0 +1,1739 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Квиз по автоматам</title>
+  <style>
+    :root {
+      --bg: #0f1218;
+      --panel: #171b24;
+      --text: #f4f6fb;
+      --muted: #b8c0d4;
+      --ok: #1f9d55;
+      --bad: #c53030;
+      --accent: #f6c349;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, #1a1f2c 0%, transparent 35%),
+        radial-gradient(circle at 80% 0%, #23202f 0%, transparent 30%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    .app {
+      width: min(980px, 100%);
+      height: calc(100vh - 40px);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 14px 48px rgba(0,0,0,.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .title {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.05;
+      letter-spacing: 0.5px;
+      text-align: center;
+      color: var(--accent);
+      text-wrap: balance;
+      min-height: 1.2em;
+    }
+
+    .meta {
+      margin: 0 0 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .wrong-hint {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(197,48,48,.55);
+      background: rgba(197,48,48,.16);
+      color: #ffd4d4;
+      line-height: 1.35;
+      display: none;
+    }
+
+    .wrong-hint.show {
+      display: block;
+    }
+
+    .card {
+      position: relative;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #10141e;
+      cursor: pointer;
+      transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
+      aspect-ratio: 16 / 9;
+      user-select: none;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.28);
+      border-color: rgba(246, 195, 73, .4);
+    }
+
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+      background: #0a0d13;
+    }
+
+    .card.correct {
+      border-color: var(--ok);
+      box-shadow: 0 0 0 3px rgba(31,157,85,.35) inset;
+    }
+
+    .card.wrong {
+      border-color: var(--bad);
+      box-shadow: 0 0 0 3px rgba(197,48,48,.33) inset;
+    }
+
+    .controls {
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .pill {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.11);
+      border-radius: 999px;
+      padding: 6px 12px;
+    }
+
+    .pill.ok {
+      border-color: rgba(31,157,85,.5);
+      color: #9ef0c4;
+    }
+
+    .pill.warn {
+      border-color: rgba(246,195,73,.65);
+      color: #ffe39b;
+    }
+
+    .pill.bad {
+      border-color: rgba(197,48,48,.55);
+      color: #ffb0b0;
+    }
+
+    .top-row {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 0 14px;
+      flex: 0 0 auto;
+      min-height: 40px;
+    }
+
+    .modes {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0;
+      flex: 0 0 auto;
+    }
+
+    .hint-btn {
+      position: absolute;
+      right: 0;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.07);
+      color: #f2f6ff;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .content-shell {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .fast-options {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 10px;
+    }
+
+    .fast-opt-btn {
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
+      color: #e8edf8;
+      padding: 7px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 620;
+      font-size: .9rem;
+    }
+
+    .fast-opt-btn.active {
+      border-color: rgba(246,195,73,.8);
+      background: rgba(246,195,73,.2);
+      color: #ffdea5;
+    }
+
+    .fast-summary {
+      margin-top: 12px;
+      border: 1px solid rgba(31,157,85,.55);
+      border-radius: 12px;
+      background: rgba(31,157,85,.2);
+      color: #d9ffe8;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .fast-summary.ok {
+      border-color: rgba(31,157,85,.55);
+      background: rgba(31,157,85,.2);
+      color: #d9ffe8;
+    }
+
+    .fast-summary.warn {
+      border-color: rgba(246,195,73,.65);
+      background: rgba(246,195,73,.2);
+      color: #ffeab8;
+    }
+
+    .fast-summary.bad {
+      border-color: rgba(197,48,48,.55);
+      background: rgba(197,48,48,.2);
+      color: #ffd0d0;
+    }
+
+    .fast-summary-title {
+      margin: 0 0 6px;
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+
+    .fast-summary-text {
+      margin: 0 0 10px;
+      line-height: 1.35;
+    }
+
+    .fast-summary-btn {
+      border: 1px solid rgba(255,255,255,.28);
+      background: rgba(255,255,255,.08);
+      color: #f1f8ff;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .mode-btn {
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: #e8edf8;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 650;
+    }
+
+    .mode-btn.active {
+      border-color: rgba(246,195,73,.7);
+      background: rgba(246,195,73,.18);
+      color: #ffdea5;
+    }
+
+    .desc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .desc-option {
+      border: 2px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      background: rgba(255,255,255,.05);
+      color: #eaf0ff;
+      padding: 12px;
+      text-align: left;
+      line-height: 1.35;
+      font-size: .95rem;
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      min-height: 110px;
+    }
+
+    .desc-option:hover {
+      transform: translateY(-1px);
+      border-color: rgba(246,195,73,.6);
+      background: rgba(246,195,73,.08);
+    }
+
+    .desc-option.correct {
+      border-color: var(--ok);
+      background: rgba(31,157,85,.16);
+    }
+
+    .desc-option.wrong {
+      border-color: var(--bad);
+      background: rgba(197,48,48,.16);
+    }
+
+    .theory-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .theory-card {
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      padding: 12px;
+    }
+
+    .theory-name {
+      margin: 0 0 8px;
+      color: #ffe0a3;
+      font-size: 1.05rem;
+      text-align: center;
+    }
+
+    .theory-image {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+      border-radius: 10px;
+      background: #0a0d13;
+      cursor: pointer;
+    }
+
+    .theory-desc {
+      margin: 10px 0 8px;
+      font-size: .93rem;
+      line-height: 1.35;
+      color: #dce4f7;
+    }
+
+    .theory-thumb-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .theory-thumb {
+      width: 52px;
+      height: 32px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+      overflow: hidden;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .theory-thumb.active {
+      border-color: rgba(246,195,73,.85);
+      box-shadow: 0 0 0 1px rgba(246,195,73,.35);
+    }
+
+    .theory-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .theory-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      background: rgba(11, 16, 26, .5);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 86px 16px 16px;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s ease;
+      backdrop-filter: blur(1.25px);
+    }
+
+    .theory-modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .theory-modal-card {
+      width: min(820px, 100%);
+      max-height: none;
+      overflow: visible;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(23,27,36,.94), rgba(23,27,36,.88));
+      color: #e8eefb;
+      box-shadow: 0 14px 48px rgba(0,0,0,.42), 0 0 0 1px rgba(246,195,73,.12);
+      padding: 10px;
+    }
+
+    .theory-modal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .theory-modal-title {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #ffd992;
+    }
+
+    .theory-close {
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.1);
+      color: #f5f9ff;
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .theory-modal .theory-grid {
+      gap: 9px;
+    }
+
+    .theory-modal .theory-card {
+      border-radius: 12px;
+      padding: 9px;
+    }
+
+    .theory-modal .theory-name {
+      margin: 0 0 6px;
+      font-size: .92rem;
+      line-height: 1.2;
+    }
+
+    .theory-modal .theory-image {
+      max-height: 128px;
+      aspect-ratio: 16 / 7;
+      border-radius: 8px;
+    }
+
+    .theory-modal .theory-desc {
+      margin: 6px 0 6px;
+      font-size: .79rem;
+      line-height: 1.22;
+      display: block;
+      overflow: visible;
+    }
+
+    .theory-modal .theory-desc strong,
+    .theory-desc strong,
+    .overlay-desc strong,
+    .desc-option strong,
+    .wrong-hint strong {
+      color: #fff3cc;
+      font-weight: 800;
+    }
+
+    .theory-modal .theory-thumb-row {
+      gap: 5px;
+    }
+
+    .theory-modal .theory-thumb {
+      width: 40px;
+      height: 24px;
+      border-radius: 6px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(0,0,0,.74);
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .16s ease;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .overlay-card {
+      width: min(780px, 100%);
+      border-radius: 16px;
+      background: #121724;
+      border: 2px solid rgba(255,255,255,.18);
+      box-shadow: 0 18px 50px rgba(0,0,0,.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .overlay-status {
+      margin: 0;
+      padding: 12px 14px;
+      font-weight: 700;
+      text-align: center;
+      background: rgba(31,157,85,.18);
+      color: #8ff0b8;
+    }
+
+    .overlay-status.big-ok {
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #b8ffcf;
+      text-shadow: 0 0 18px rgba(31,157,85,.55);
+      background: rgba(31,157,85,.28);
+    }
+
+    .overlay-status.hidden {
+      display: none;
+    }
+
+    .overlay-card.is-wrong .overlay-status {
+      background: rgba(197,48,48,.2);
+      color: #ff9a9a;
+    }
+
+    .overlay-image {
+      width: 100%;
+      max-height: 380px;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+      background: #0a0d13;
+    }
+
+    .overlay-image.click-next {
+      cursor: pointer;
+    }
+
+    .overlay-name {
+      margin: 12px 14px 4px;
+      font-size: 1.2rem;
+      font-weight: 750;
+      color: #f4f6fb;
+      text-align: center;
+    }
+
+    .overlay-desc {
+      margin: 0 14px 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(31,157,85,.38);
+      color: #d7ffe7;
+      background: rgba(31,157,85,.1);
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .overlay-card.is-wrong .overlay-desc {
+      border-color: rgba(197,48,48,.5);
+      color: #ffd4d4;
+      background: rgba(197,48,48,.16);
+    }
+
+    .overlay-card.desc-top .overlay-desc {
+      order: 1;
+      margin: 12px 14px 12px;
+    }
+
+    .overlay-card.desc-top .overlay-image {
+      order: 2;
+    }
+
+    .overlay-card.desc-top .overlay-name {
+      order: 3;
+      margin-top: 10px;
+    }
+
+    .overlay-next {
+      margin: 0 14px 14px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 10px;
+      background: rgba(255,255,255,.09);
+      color: #f1f5ff;
+      font-weight: 700;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .zoom-view {
+      position: fixed;
+      inset: 0;
+      z-index: 10001;
+      padding: 20px;
+      display: grid;
+      place-items: center;
+      background: rgba(8, 12, 20, .72);
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .14s ease;
+    }
+
+    .zoom-view.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .zoom-card {
+      width: min(1100px, 96vw);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(18, 24, 36, .96);
+      box-shadow: 0 18px 48px rgba(0,0,0,.45);
+      overflow: hidden;
+    }
+
+    .zoom-title {
+      margin: 0;
+      padding: 10px 14px;
+      text-align: center;
+      font-weight: 800;
+      color: #ffe0a3;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+
+    .zoom-image {
+      width: 100%;
+      max-height: min(78vh, 900px);
+      object-fit: contain;
+      object-position: center;
+      display: block;
+      background: #0a0d13;
+    }
+
+    .zoom-desc {
+      margin: 0;
+      padding: 10px 14px 14px;
+      color: #e5ecfb;
+      font-size: .96rem;
+      line-height: 1.34;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 680px) {
+      .grid { grid-template-columns: 1fr; }
+      .desc-grid { grid-template-columns: 1fr; }
+      .theory-grid { grid-template-columns: 1fr; }
+      .top-row {
+        justify-content: center;
+        padding-top: 44px;
+      }
+      .hint-btn {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 0;
+      }
+      .app {
+        padding: 16px;
+        height: calc(100vh - 24px);
+      }
+      .theory-modal {
+        padding-top: 62px;
+      }
+      .theory-modal-card {
+        width: min(92vw, 820px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1 class="title" id="question">Загрузка…</h1>
+    <p class="meta" id="meta">Выбери фото, которое соответствует названию сверху (всегда 4 варианта)</p>
+    <div class="top-row">
+      <div class="modes">
+        <button class="mode-btn" id="modeFast" type="button">1) На скорость</button>
+        <button class="mode-btn active" id="modeLearn" type="button">2) Обучение</button>
+        <button class="mode-btn" id="modeDesc" type="button">3) Отличия</button>
+        <button class="mode-btn" id="modeTheory" type="button">4) Теория</button>
+      </div>
+      <button class="hint-btn" id="hintBtn" type="button">Подсказка</button>
+    </div>
+
+    <div class="content-shell">
+      <div id="quizSection">
+        <div class="fast-options hidden" id="fastOptions">
+          <button class="fast-opt-btn active" id="fastOptMinute" type="button">За минуту</button>
+          <button class="fast-opt-btn" id="fastOptClassic" type="button">Классика 7с</button>
+          <button class="fast-opt-btn" id="fastOptSudden" type="button">До ошибки</button>
+        </div>
+        <section class="grid" id="answers"></section>
+        <div class="wrong-hint" id="wrongHint"></div>
+        <div class="fast-summary hidden" id="fastSummary">
+          <p class="fast-summary-title" id="fastSummaryTitle"></p>
+          <p class="fast-summary-text" id="fastSummaryText"></p>
+          <button class="fast-summary-btn" id="fastSummaryRestart" type="button">Еще раз</button>
+        </div>
+
+        <div class="controls">
+          <div class="pill">Раунд: <span id="round">0</span></div>
+          <div class="pill" id="scorePill">Верно: <span id="score">0 из 0</span></div>
+          <div class="pill hidden" id="timerPill">Таймер: <span id="timer">0</span>с</div>
+        </div>
+      </div>
+      <div class="theory-section hidden" id="theorySection">
+        <p class="meta">Теория: фото и ключевые отличия моделей</p>
+        <section class="theory-grid" id="theoryGridMain"></section>
+      </div>
+    </div>
+  </main>
+  <div class="theory-modal" id="theoryModal">
+    <div class="theory-modal-card" id="theoryModalCard">
+      <div class="theory-modal-top">
+        <h2 class="theory-modal-title">Подсказка: Теория</h2>
+        <button class="theory-close" id="theoryClose" type="button">×</button>
+      </div>
+      <section class="theory-grid" id="theoryGridModal"></section>
+    </div>
+  </div>
+  <div class="overlay" id="overlay">
+    <div class="overlay-card" id="overlayCard">
+      <p class="overlay-status" id="overlayStatus"></p>
+      <img class="overlay-image" id="overlayImage" alt="" />
+      <p class="overlay-name" id="overlayName"></p>
+      <p class="overlay-desc" id="overlayDesc"></p>
+      <button class="overlay-next" id="overlayNext" type="button">Дальше</button>
+    </div>
+  </div>
+  <div class="zoom-view" id="zoomView">
+    <div class="zoom-card" id="zoomCard">
+      <p class="zoom-title" id="zoomTitle"></p>
+      <img class="zoom-image" id="zoomImage" alt="" />
+      <p class="zoom-desc" id="zoomDesc"></p>
+    </div>
+  </div>
+
+  <script>
+    const weapons = [
+      {
+        name: "АК",
+        images: [
+          "quiz_assets_ak/image2.png",
+          "https://upload.wikimedia.org/wikipedia/commons/c/cb/First_AK_47.jpg",
+          "https://upload.wikimedia.org/wikipedia/commons/3/32/%D0%90%D0%9A-47.jpg"
+        ],
+        description: "Калибр 7,62х39: большой изгиб магазина, наклон приклада вниз, деревянные цевьё, приклад и рукоять."
+      },
+      {
+        name: "АКМ",
+        images: [
+          "quiz_assets_ak/image5.png",
+          "https://modernfirearms.net/wp-content/uploads/2021/04/akm2.jpg",
+          "https://zenitco.ru/upload/resize_cache/webp/iblock/886/akm.webp" // средняя сложность
+        ],
+        description: "Калибр 7,62х39: прямой приклад, пластиковая рукоять, скошенный ДТК."
+      },
+      {
+        name: "АКМС",
+        images: [
+          "https://modernfirearms.net/wp-content/uploads/2021/04/akms.jpg",
+          "https://bezpekavip.com/files/storage/images/na_glavnoy/glavnay-2/zbroj/orujie/fad001521287afb5515bbf7805ffcbb3.jpg",
+          "https://antikvariat.ru/upload/iblock/0e2/img_2821_156093_15613698965393090.jpg"
+        ],
+        description: "Калибр 7,62х39: версия АКМ со складным прикладом, приклад складывается под цевьё."
+      },
+      {
+        name: "АК-74",
+        images: [
+          "quiz_assets_ak/image10.png",
+          "https://www.armoury-online.ru/usr/templates/images/icon_1280691403768.jpg",
+          "https://zenitco.ru/upload/iblock/12d/%D0%B0%D0%BA-74.jpg" // средняя сложность
+        ],
+        description: "Калибр 5,45х39: малый изгиб магазина, ДТК двухкамерный • резьба, приклад не складывается."
+      },
+      {
+        name: "АКС-74",
+        images: [
+          "quiz_assets_ak/image7.png",
+          "https://static.tildacdn.com/tild6533-3430-4636-b565-346137376266/avtomat-kalashnikova.jpg",
+          "https://cdn.mmg-shop.ru/wa-data/public/shop/products/01/webp/74/00/74/images/354/354.970.webp"
+        ],
+        description: "Калибр 5,45х39: отличается от АК-74 складывающимся вбок металлическим прикладом."
+      },
+      {
+        name: "АК-74М",
+        images: [
+          "quiz_assets_ak/image12.png",
+          "https://modernfirearms.net/wp-content/uploads/2010/10/ak74m-3.jpg",
+          "https://weaponland.ru/_ld/0/36058165.jpg",
+          "https://topwar.ru/uploads/posts/2016-09/1473935625_1.jpg" // сложная
+        ],
+        description: "Калибр 5,45х39: пластиковый приклад складывается влево, есть боковое крепление под прицел, ДТК двухкамерный • резьба."
+      },
+      {
+        name: "АКС-74У",
+        images: [
+          "quiz_assets_ak/image13.png",
+          "https://topwar.ru/uploads/posts/2018-09/1537189631_aks74u2.jpg",
+          "https://www.dvastvola.ru/image/cache/catalog/aks-74y-1200x1200.jpg"
+        ],
+        description: "Калибр 5,45х39: укороченная версия, компактный корпус, сильно укорочен ствол, иная форма ДТК."
+      },
+      {
+        name: "АК-101",
+        images: [
+          "quiz_assets_ak/image3.png",
+          "https://vpk.name/file/img/AK101_2.png",
+          "https://i.redd.it/ak-101-best-ak-in-5-56-hands-down-v0-s2fnme9es25e1.jpg?width=4029&format=pjpg&auto=webp&s=4b9ebc5432aa13dd319184d6f040c39b598bfcc9",
+          "https://img.kalashnikovgroup.ru/2120,fit/https://cdn.kalashnikovgroup.ru/static/images/a/k/1/ak101-2-12330-458.jpg"
+        ],
+        description: "Калибр 5,56х45: полноразмерный, гладкая крышка, боковая планка, почти прямой магазин 5.56, ДТК двухкамерный • резьба."
+      },
+      {
+        name: "АК-102",
+        images: [
+          "quiz_assets_ak/image9.png",
+          "https://img.kalashnikovgroup.ru/830,fit/https://cdn.kalashnikovgroup.ru/static/images/a/k/1/ak102-38i8751-3kh2-22109-1080.jpg",
+          "https://vpk.name/file/img/AK102_2.png"
+        ],
+        description: "Калибр 5,56х45: укороченный, гладкая крышка, боковая планка, почти прямой магазин 5.56, короткий ствол, бустер • резьба, газоотводная трубка совмещена с мушкой."
+      },
+      {
+        name: "АК-103",
+        images: [
+          "quiz_assets_ak/image1.png",
+          "https://cdn.kalashnikovgroup.ru/static/images/3/8/i/38i8766-free-22130-1080.jpg",
+          "https://tutmnogo.com/uploads/product/10500/10529/photo_15_2025-01-11-29-27_2025-01-30_07-38-25.jpg"
+        ],
+        description: "Калибр 7,62х39: полноразмерный, гладкая крышка, боковая планка, магазин 7.62 \"банан\", ДТК двухкамерный • резьба."
+      },
+      {
+        name: "АК-104",
+        images: [
+          "quiz_assets_ak/image11.png",
+          "https://cdn.kalashnikovgroup.ru/static/images/3/8/i/38i8784-free-22132-1080.jpg",
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/1/ak104-1-12335-458.jpg"
+        ],
+        description: "Калибр 7,62х39: укороченный, гладкая крышка, боковая планка, магазин 7.62 \"банан\", короткий ствол, бустер • резьба, газоотводная трубка совмещена с мушкой."
+      },
+      {
+        name: "АК-105",
+        images: [
+          "quiz_assets_ak/image6.png",
+          "https://laserwar.ru/theme/resources/product-images/ak-105-bars-01.jpg",
+          "https://vpk.name/file/img/boec-rossiiskogo-sobr-s-ak105-n5of9i3r-1575538501.jpg"
+        ],
+        description: "Калибр 5,45х39: укороченный, гладкая крышка, боковая планка, короткий ствол, бустер • резьба, газоотводная трубка совмещена с мушкой."
+      },
+      {
+        name: "АК-107",
+        images: [
+          "https://upload.wikimedia.org/wikipedia/commons/6/6d/Kalaschnikow_AK_107_noBG.png",
+          "https://upload.wikimedia.org/wikipedia/commons/9/9b/AK-107_with_grenade_launcher.jpg",
+          "http://oruzhie.info/images/ak-107/serijnie_postavki.jpg"
+        ],
+        description: "Калибр 5,45х39: полноразмерный, гладкая крышка, боковая планка, магазин 5.45, BARS, утолщённая газовая часть, ДТК двухкамерный • резьба."
+      },
+      {
+        name: "АК-108",
+        images: [
+          "https://bezpekavip.com/files/storage/images/na_glavnoy/glavnay-2/zbroj/orujie/63c5e0f5b8027d8f158e2e60e7fe2c9a.jpg",
+          "https://wikiwarriors.org/images/thumb/b/b2/AK-108_1.jpg/800px-AK-108_1.jpg.webp"
+        ],
+        description: "Калибр 5,56х45: полноразмерный, гладкая крышка, боковая планка, почти прямой магазин 5.56, BARS, утолщённая газовая часть, ДТК двухкамерный • резьба."
+      },
+      {
+        name: "АК-109",
+        images: [
+          "https://media.sketchfab.com/models/8f701898b61f4ae19547af53acedafd9/thumbnails/1c337c9d41a644cd8c286b0c6b24bf8c/d31605c47f2c43e1a09a5907328d304d.jpeg",
+          "https://bezpekavip.com/files/storage/images/na_glavnoy/glavnay-2/zbroj/orujie/37e3cfb8117c4a558349c3eec9fe684a.jpg"
+        ],
+        description: "Калибр 7,62х39: полноразмерный, гладкая крышка, боковая планка, магазин 7.62 \"банан\", BARS, утолщённая газовая часть, ДТК двухкамерный • резьба."
+      },
+      {
+        name: "АК-200",
+        images: [
+          "https://img.kalashnikovgroup.ru/1536,fit/https://cdn.kalashnikovgroup.ru/static/images/a/k/2/ak200a-30696-1080.jpg",
+          "https://zenitco.ru/upload/iblock/f9f/%D0%90%D0%9A-200.jpg",
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-200-slider-1-31089-1080.jpg" // средняя сложность
+        ],
+        description: "Калибр 5,45х39: полноразмерный, планки сверху и на цевье, телескопический приклад, классический прицел-ползунок, крышка на шарнире и флажке сзади, возвратная пружина как у АК-74, без диоптрического прицела, пламегас щелевой • резьба."
+      },
+      {
+        name: "АК-201",
+        images: [
+          "https://img.kalashnikovgroup.ru/1536,fit/https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-201-a-30872-1080.JPG",
+          "https://p.turbosquid.com/ts-thumb/Tp/kCAdLg/sN/0001/jpg/1744099610/1920x1080/fit_q87/e39dae646aea4f1062bc6c7761aa05cdd3e0ceaa/0001.jpg",
+          "https://p.turbosquid.com/ts-thumb/Tp/kCAdLg/qC/pr1200201/jpg/1744099584/600x600/fit_q87/1500bace73c0ce523965feb7404328480a2c84c5/pr1200201.jpg"
+        ],
+        description: "Калибр 5,56х45: полноразмерный, планки сверху и на цевье, телескопический приклад, классический прицел-ползунок, крышка на шарнире и флажке сзади, возвратная пружина как у АК-74, без диоптрического прицела, пламегас щелевой • резьба."
+      },
+      {
+        name: "АК-202",
+        images: [
+          "https://img.kalashnikovgroup.ru/1536,fit/https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-202-a-30873-1080.JPG",
+          "https://media.sketchfab.com/models/b294eb2f8031450ba7a5b8bba08667f3/thumbnails/409945cd699c4029a57c62b4d1158e16/d4b4f834e16f404f824c9c32e76729a0.jpeg",
+          "https://p.turbosquid.com/ts-thumb/B8/hJHCMo/Co/pr1200202/jpg/1768999337/1920x1080/fit_q87/446c5df69971997489063d6c07aa10c7c80df19b/pr1200202.jpg"
+        ],
+        description: "Калибр 5,56х45: укороченный, планки сверху и на цевье, телескопический приклад, классический прицел-ползунок, крышка на шарнире и флажке сзади, возвратная пружина как у АК-74, без диоптрического прицела, пламегас щелевой • резьба."
+      },
+      {
+        name: "АК-203",
+        images: [
+          "https://img.kalashnikovgroup.ru/1536,fit/https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-203-a-30874-1080.JPG",
+          "https://cdnn21.img.ria.ru/images/155164/82/1551648210_0:0:3642:2048_1920x0_80_0_0_91e204f2f845462360f993ea376fe821.jpg",
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-203-levo-22154-1080.jpg"
+        ],
+        description: "Калибр 7,62х39: полноразмерный, планки сверху и на цевье, телескопический приклад, классический прицел-ползунок, крышка на шарнире и флажке сзади, возвратная пружина как у АК-74, без диоптрического прицела, пламегас щелевой • резьба."
+      },
+      {
+        name: "АК-204",
+        images: [
+          "https://img.kalashnikovgroup.ru/1536,fit/https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-204-a-30875-1080.JPG",
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/2/ak204-22025-1080.JPG",
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/2/ak204-dsc1348-3kh2-22159-1080.jpg"
+        ],
+        description: "Калибр 7,62х39: укороченный, планки сверху и на цевье, телескопический приклад, классический прицел-ползунок, крышка на шарнире и флажке сзади, возвратная пружина как у АК-74, без диоптрического прицела, пламегас щелевой • резьба."
+      },
+      {
+        name: "АК-205",
+        images: [
+          "https://img.kalashnikovgroup.ru/1536,fit/https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-205-a-30876-1080.JPG",
+          "https://www.armoury-online.ru/assets/photo/%D0%90%D0%9A-205%201.jpg",
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-205-levo-22174-1080.jpg"
+        ],
+        description: "Калибр 5,45х39: укороченный, планки сверху и на цевье, телескопический приклад, классический прицел-ползунок, крышка на шарнире и флажке сзади, возвратная пружина как у АК-74, без диоптрического прицела, пламегас щелевой • резьба."
+      },
+      {
+        name: "АК-12",
+        images: [
+          "https://cdn.kalashnikovgroup.ru/static/images/g/u/s/gus-5756-free-22045-1080.jpg",
+          "https://www.kalashnikov.ru/wp-content/uploads/2022/12/AK-12-2023-god-kopiya.jpg",
+          "https://www.ak-info.ru/ak12/ak12_tech_about/ak12_1.jpg",
+          "https://www.kalashnikov.ru/wp-content/uploads/2022/08/spetsnaz-ak-12-6P70-1.jpg"
+        ],
+        description: "Калибр 5,45х39: полноразмерный, Пикатинни на крышке, вывешенное цевьё с пикатинни, телескопический приклад, диоптрический прицел, пламегас щелевой • быстросъёмный, крышка на шарнире и сзади фиксируется возвратной пружиной, а не просто снимается как у АК-74/200."
+      },
+      {
+        name: "АК-15",
+        images: [
+          "https://foto-i-mir.ru/kartinki/AK-15_KALASHNIKOV_ARMIA-2016_01.JPG",
+          "https://www.armoury-online.ru/usr/templates/images/1473676705435.jpg",
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-15-1-30686-1080.jpg"
+        ],
+        description: "Калибр 7,62х39: полноразмерный, Пикатинни на крышке, вывешенное цевьё с пикатинни, телескопический приклад, магазин 7.62 \"банан\", диоптрический прицел, пламегас щелевой • быстросъёмный, крышка на шарнире и сзади фиксируется возвратной пружиной, а не просто снимается как у АК-74/200."
+      },
+      {
+        name: "АК-15К",
+        images: [
+          "https://www.ak-info.ru/ak12/ak15c/ak-15c004.jpg",
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-15k-1-30498-1080.jpg"
+        ],
+        description: "Калибр 7,62х39: укороченный, Пикатинни на крышке, вывешенное цевьё с пикатинни, телескопический приклад, магазин 7.62 \"банан\", диоптрический прицел, газоотводная трубка совмещена с мушкой, пламегас щелевой • быстросъёмный, крышка на шарнире и сзади фиксируется возвратной пружиной."
+      },
+      {
+        name: "АК-15СК",
+        images: [
+          "https://cdn.kalashnikovgroup.ru/static/images/a/k/-/ak-15-sk-a-30666-1080.jpg"
+        ],
+        description: "Калибр 7,62х39: сверх-короткий, Пикатинни на крышке, вывешенное цевьё с пикатинни, телескопический приклад, приклад наклонён вниз, магазин 7.62 \"банан\", диоптрический прицел, пламегас щелевой • быстросъёмный, крышка на шарнире и сзади фиксируется возвратной пружиной."
+      },
+      {
+        name: "АК-19",
+        images: [
+          "https://upload.wikimedia.org/wikipedia/commons/3/34/Ak19-1-30747-1080.jpg",
+          "https://cdn.kalashnikovgroup.ru/static/images/g/u/s/gus-5894-3840kh2160-22064-1080.jpg",
+          "https://modernfirearms.net/wp-content/uploads/2020/09/ak191.jpg",
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlMDu1MBPhB8CCEWMcyWqkmj3FgBo0K2gmqA&s"
+        ],
+        description: "Калибр 5,56х45: полноразмерный, Пикатинни на крышке, вывешенное цевьё с пикатинни, телескопический приклад, почти прямой магазин 5.56, диоптрический прицел, пламегас щелевой • быстросъёмный, крышка на шарнире и сзади фиксируется возвратной пружиной, а не просто снимается как у АК-74/200."
+      },
+      {
+        name: "АК-19К",
+        images: [
+          "https://www.kalashnikov.ru/wp-content/uploads/2023/08/AK-19-malogabaritnyj-sprava.jpg"
+        ],
+        description: "Калибр 5,56х45: укороченный, Пикатинни на крышке, вывешенное цевьё с пикатинни, телескопический приклад, почти прямой магазин 5.56, диоптрический прицел, газоотводная трубка совмещена с мушкой, пламегас щелевой • быстросъёмный, крышка на шарнире и сзади фиксируется возвратной пружиной."
+      }
+    ];
+
+    const $question = document.getElementById("question");
+    const $meta = document.getElementById("meta");
+    const $answers = document.getElementById("answers");
+    const $wrongHint = document.getElementById("wrongHint");
+    const $round = document.getElementById("round");
+    const $scorePill = document.getElementById("scorePill");
+    const $score = document.getElementById("score");
+    const $fastOptions = document.getElementById("fastOptions");
+    const $fastOptMinute = document.getElementById("fastOptMinute");
+    const $fastOptClassic = document.getElementById("fastOptClassic");
+    const $fastOptSudden = document.getElementById("fastOptSudden");
+    const $timerPill = document.getElementById("timerPill");
+    const $fastSummary = document.getElementById("fastSummary");
+    const $fastSummaryTitle = document.getElementById("fastSummaryTitle");
+    const $fastSummaryText = document.getElementById("fastSummaryText");
+    const $fastSummaryRestart = document.getElementById("fastSummaryRestart");
+    const $modeFast = document.getElementById("modeFast");
+    const $modeLearn = document.getElementById("modeLearn");
+    const $modeDesc = document.getElementById("modeDesc");
+    const $modeTheory = document.getElementById("modeTheory");
+    const $hintBtn = document.getElementById("hintBtn");
+    const $quizSection = document.getElementById("quizSection");
+    const $theorySection = document.getElementById("theorySection");
+    const $theoryModal = document.getElementById("theoryModal");
+    const $theoryModalCard = document.getElementById("theoryModalCard");
+    const $theoryClose = document.getElementById("theoryClose");
+    const $theoryGridMain = document.getElementById("theoryGridMain");
+    const $theoryGridModal = document.getElementById("theoryGridModal");
+    const $overlay = document.getElementById("overlay");
+    const $overlayCard = document.getElementById("overlayCard");
+    const $overlayStatus = document.getElementById("overlayStatus");
+    const $overlayImage = document.getElementById("overlayImage");
+    const $overlayName = document.getElementById("overlayName");
+    const $overlayDesc = document.getElementById("overlayDesc");
+    const $overlayNext = document.getElementById("overlayNext");
+    const $zoomView = document.getElementById("zoomView");
+    const $zoomTitle = document.getElementById("zoomTitle");
+    const $zoomImage = document.getElementById("zoomImage");
+    const $zoomDesc = document.getElementById("zoomDesc");
+
+    const FAST_ROUND_SECONDS = 7;
+    const FAST_MINUTE_SECONDS = 60;
+
+    let mode = "learn";
+    let fastVariant = "minute";
+    let prevWeaponIndex = -1;
+    let round = 0;
+    let score = 0;
+    let locked = false;
+    let currentCorrectIndex = -1;
+    let currentCorrectWeapon = null;
+    let currentCorrectImage = "";
+    let fastTimerId = null;
+    let fastTimeoutId = null;
+    let fastMinuteTimerId = null;
+    let fastMinuteStarted = false;
+    let fastRunActive = false;
+    let fastNeedsKickoffTap = false;
+    let fastElapsedAnswers = 0;
+    let fastTimeLeft = FAST_ROUND_SECONDS;
+    let zoomImages = [];
+    let zoomImageIndex = 0;
+    const weaponImageCursor = new Map();
+    const modeOrder = ["fast", "learn", "desc", "theory"];
+
+    function randomInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function sampleUniqueIndexes(count, excludeIndex = -1) {
+      const indexes = Array.from({ length: weapons.length }, (_, i) => i).filter(i => i !== excludeIndex);
+      for (let i = indexes.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
+      }
+      return indexes.slice(0, count);
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function pickWeaponImage(weapon, weaponIndex) {
+      if (Array.isArray(weapon.images) && weapon.images.length > 0) {
+        const cursor = weaponImageCursor.get(weaponIndex) ?? 0;
+        const imageUrl = weapon.images[cursor % weapon.images.length];
+        weaponImageCursor.set(weaponIndex, (cursor + 1) % weapon.images.length);
+        return imageUrl;
+      }
+      return weapon.image;
+    }
+
+    function getWeaponImages(weapon) {
+      if (Array.isArray(weapon.images) && weapon.images.length > 0) {
+        return weapon.images;
+      }
+      return [weapon.image];
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function escapeRegExp(text) {
+      return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function normalizeDescriptionText(raw) {
+      let text = raw;
+      text = text.replace(/\s*•\s*/g, ", ");
+      text = text.replace(/,?\s*ДТК двухкамерный,\s*резьба/gi, ", ДТК двухкамерный (резьба)");
+      text = text.replace(/,?\s*бустер,\s*резьба/gi, ", бустер (резьба)");
+      text = text.replace(/,?\s*пламегас щелевой,\s*резьба/gi, ", пламегас щелевой (резьба)");
+      text = text.replace(/,?\s*пламегас щелевой,\s*быстросъ[её]мный/gi, ", пламегас щелевой (быстросъёмный)");
+      text = text.replace(/\s+,/g, ",");
+      text = text.replace(/,\s*,+/g, ", ");
+      text = text.replace(/\s{2,}/g, " ").trim();
+      return text;
+    }
+
+    const KEY_CUES_BY_WEAPON = {
+      "АК": ["наклон приклада вниз", "большой изгиб магазина"],
+      "АКМ": ["скошенный ДТК", "прямой приклад"],
+      "АКМС": ["версия АКМ со складным прикладом", "приклад складывается под цевьё"],
+      "АК-74": ["малый изгиб магазина"],
+      "АКС-74": ["складывающимся вбок металлическим прикладом"],
+      "АК-74М": ["пластиковый приклад складывается влево", "боковое крепление под прицел"],
+      "АКС-74У": ["сильно укорочен ствол", "иная форма ДТК"],
+      "АК-101": ["почти прямой магазин 5.56"],
+      "АК-102": ["почти прямой магазин 5.56", "короткий ствол", "газоотводная трубка совмещена с мушкой"],
+      "АК-103": ["магазин 7.62 \"банан\""],
+      "АК-104": ["магазин 7.62 \"банан\"", "короткий ствол", "газоотводная трубка совмещена с мушкой"],
+      "АК-105": ["короткий ствол", "газоотводная трубка совмещена с мушкой"],
+      "АК-107": ["BARS", "утолщённая газовая часть"],
+      "АК-108": ["BARS", "утолщённая газовая часть"],
+      "АК-109": ["BARS", "утолщённая газовая часть"],
+      "АК-200": ["классический прицел-ползунок", "без диоптрического прицела"],
+      "АК-201": ["классический прицел-ползунок", "без диоптрического прицела"],
+      "АК-202": ["классический прицел-ползунок", "без диоптрического прицела"],
+      "АК-203": ["классический прицел-ползунок", "без диоптрического прицела"],
+      "АК-204": ["классический прицел-ползунок", "без диоптрического прицела"],
+      "АК-205": ["классический прицел-ползунок", "без диоптрического прицела"],
+      "АК-12": ["Пикатинни на крышке", "вывешенное цевьё с пикатинни", "диоптрический прицел", "крышка на шарнире и сзади фиксируется возвратной пружиной"],
+      "АК-15": ["Пикатинни на крышке", "вывешенное цевьё с пикатинни", "магазин 7.62 \"банан\"", "диоптрический прицел", "крышка на шарнире и сзади фиксируется возвратной пружиной"],
+      "АК-15К": ["укороченный", "газоотводная трубка совмещена с мушкой", "магазин 7.62 \"банан\""],
+      "АК-15СК": ["сверх-короткий", "приклад наклонён вниз", "магазин 7.62 \"банан\""],
+      "АК-19": ["Пикатинни на крышке", "вывешенное цевьё с пикатинни", "почти прямой магазин 5.56", "диоптрический прицел", "крышка на шарнире и сзади фиксируется возвратной пружиной"],
+      "АК-19К": ["укороченный", "почти прямой магазин 5.56", "газоотводная трубка совмещена с мушкой"]
+    };
+
+    function emphasizeDescriptionHtml(raw, weaponName = "") {
+      const normalized = normalizeDescriptionText(raw);
+      let html = escapeHtml(normalized);
+      const basePhrases = [
+        "Калибр 7,62х39",
+        "Калибр 5,45х39",
+        "Калибр 5,56х45",
+        "укороченный",
+        "полноразмерный"
+      ];
+      const modelPhrases = KEY_CUES_BY_WEAPON[weaponName] || [];
+      const phrases = [...new Set([...basePhrases, ...modelPhrases])].sort((a, b) => b.length - a.length);
+
+      for (const phrase of phrases) {
+        const re = new RegExp(escapeRegExp(phrase), "gi");
+        html = html.replace(re, (match) => `<strong>${match}</strong>`);
+      }
+
+      return html;
+    }
+
+    function showZoomImageByIndex(nextIndex) {
+      if (!zoomImages.length) return;
+      zoomImageIndex = (nextIndex + zoomImages.length) % zoomImages.length;
+      $zoomImage.src = zoomImages[zoomImageIndex];
+    }
+
+    function openZoomView(src, title, description, images = []) {
+      zoomImages = images.length ? [...images] : [src];
+      const srcIndex = zoomImages.indexOf(src);
+      zoomImageIndex = srcIndex >= 0 ? srcIndex : 0;
+      $zoomImage.src = zoomImages[zoomImageIndex];
+      $zoomImage.alt = title;
+      $zoomTitle.textContent = title;
+      $zoomDesc.innerHTML = emphasizeDescriptionHtml(description, title);
+      $zoomView.classList.add("show");
+    }
+
+    function closeZoomView() {
+      $zoomView.classList.remove("show");
+      zoomImages = [];
+      zoomImageIndex = 0;
+    }
+
+    function cycleZoomImage(direction) {
+      if (!$zoomView.classList.contains("show") || zoomImages.length < 2) return false;
+      showZoomImageByIndex(zoomImageIndex + direction);
+      return true;
+    }
+
+    function renderTheoryGrid(targetGrid) {
+      targetGrid.innerHTML = "";
+      weapons.forEach((weapon) => {
+        const images = getWeaponImages(weapon);
+        const card = document.createElement("article");
+        card.className = "theory-card";
+
+        const title = document.createElement("h3");
+        title.className = "theory-name";
+        title.textContent = weapon.name;
+
+        const image = document.createElement("img");
+        image.className = "theory-image";
+        image.src = images[0];
+        image.alt = weapon.name;
+        image.loading = "lazy";
+
+        const desc = document.createElement("p");
+        desc.className = "theory-desc";
+        desc.innerHTML = emphasizeDescriptionHtml(weapon.description, weapon.name);
+
+        card.addEventListener("click", () => {
+          openZoomView(image.src, weapon.name, weapon.description, images);
+        });
+
+        card.appendChild(title);
+        card.appendChild(image);
+        card.appendChild(desc);
+
+        if (images.length > 1) {
+          const thumbRow = document.createElement("div");
+          thumbRow.className = "theory-thumb-row";
+          let activeImageIndex = 0;
+
+          const setActiveImage = (nextIndex) => {
+            const index = Math.max(0, Math.min(images.length - 1, nextIndex));
+            if (index === activeImageIndex) return;
+            activeImageIndex = index;
+            image.src = images[activeImageIndex];
+            [...thumbRow.children].forEach((child, childIdx) => {
+              child.classList.toggle("active", childIdx === activeImageIndex);
+            });
+          };
+
+          images.forEach((src, idx) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "theory-thumb";
+            if (idx === 0) btn.classList.add("active");
+            btn.innerHTML = `<img src="${src}" alt="${weapon.name} ${idx + 1}" loading="lazy" />`;
+            btn.addEventListener("click", (event) => {
+              event.stopPropagation();
+              setActiveImage(idx);
+            });
+            btn.addEventListener("mouseenter", () => {
+              setActiveImage(idx);
+            });
+            thumbRow.appendChild(btn);
+          });
+
+          card.appendChild(thumbRow);
+        }
+
+        targetGrid.appendChild(card);
+      });
+    }
+
+    function buildTheorySection() {
+      renderTheoryGrid($theoryGridMain);
+      renderTheoryGrid($theoryGridModal);
+    }
+
+    function switchModeByOffset(delta) {
+      const currentIndex = modeOrder.indexOf(mode);
+      const nextIndex = (currentIndex + delta + modeOrder.length) % modeOrder.length;
+      setMode(modeOrder[nextIndex]);
+    }
+
+    function openTheoryModal() {
+      document.body.classList.add("modal-open");
+      $theoryModal.classList.add("show");
+    }
+
+    function closeTheoryModal() {
+      $theoryModal.classList.remove("show");
+      document.body.classList.remove("modal-open");
+    }
+
+    function stopFastTimer() {
+      if (fastTimerId !== null) {
+        clearInterval(fastTimerId);
+        fastTimerId = null;
+      }
+    }
+
+    function stopFastTimeout() {
+      if (fastTimeoutId !== null) {
+        clearTimeout(fastTimeoutId);
+        fastTimeoutId = null;
+      }
+    }
+
+    function stopFastMinuteTimer() {
+      if (fastMinuteTimerId !== null) {
+        clearInterval(fastMinuteTimerId);
+        fastMinuteTimerId = null;
+      }
+      fastMinuteStarted = false;
+    }
+
+    function startQuestionTimer() {
+      stopFastTimer();
+      fastTimeLeft = FAST_ROUND_SECONDS;
+      const timerEl = document.getElementById("timer");
+      if (timerEl) timerEl.textContent = String(fastTimeLeft);
+      fastTimerId = setInterval(() => {
+        fastTimeLeft -= 1;
+        const currentTimerEl = document.getElementById("timer");
+        if (currentTimerEl) currentTimerEl.textContent = String(Math.max(0, fastTimeLeft));
+        if (fastTimeLeft <= 0) {
+          stopFastTimer();
+          handleAnswer(null, false, true);
+        }
+      }, 1000);
+    }
+
+    function showFastSummary(title, text, tone = "ok") {
+      $fastSummaryTitle.textContent = title;
+      $fastSummaryText.textContent = text;
+      $fastSummary.classList.remove("ok", "warn", "bad");
+      $fastSummary.classList.add(tone);
+      $fastSummary.classList.remove("hidden");
+    }
+
+    function hideFastSummary() {
+      $fastSummary.classList.add("hidden");
+      $fastSummary.classList.remove("ok", "warn", "bad");
+      $fastSummaryTitle.textContent = "";
+      $fastSummaryText.textContent = "";
+    }
+
+    function setFastVariant(nextVariant) {
+      fastVariant = nextVariant;
+      $fastOptMinute.classList.toggle("active", fastVariant === "minute");
+      $fastOptClassic.classList.toggle("active", fastVariant === "classic");
+      $fastOptSudden.classList.toggle("active", fastVariant === "sudden");
+      if (mode === "fast") {
+        startFastRun();
+      }
+    }
+
+    function stopAllFastTimers() {
+      stopFastTimer();
+      stopFastTimeout();
+      stopFastMinuteTimer();
+    }
+
+    function updateScorePill() {
+      $score.textContent = `${score} из ${fastElapsedAnswers}`;
+      $scorePill.classList.remove("ok", "warn", "bad");
+      if (fastElapsedAnswers === 0) return;
+      const percent = (score / fastElapsedAnswers) * 100;
+      if (percent > 90) $scorePill.classList.add("ok");
+      else if (percent >= 80) $scorePill.classList.add("warn");
+      else $scorePill.classList.add("bad");
+    }
+
+    function getAccuracyTone() {
+      if (fastElapsedAnswers === 0) return "bad";
+      const percent = (score / fastElapsedAnswers) * 100;
+      if (percent > 90) return "ok";
+      if (percent >= 80) return "warn";
+      return "bad";
+    }
+
+    function finishFastRun(title, text, tone = "ok") {
+      fastRunActive = false;
+      stopAllFastTimers();
+      showFastSummary(title, text, tone);
+      $timerPill.classList.add("hidden");
+      locked = true;
+    }
+
+    function startFastRun() {
+      fastRunActive = true;
+      locked = false;
+      stopAllFastTimers();
+      hideFastSummary();
+      round = 0;
+      score = 0;
+      fastElapsedAnswers = 0;
+      prevWeaponIndex = -1;
+      $round.textContent = "0";
+      updateScorePill();
+      $timerPill.classList.remove("hidden");
+
+      if (fastVariant === "minute") {
+        fastNeedsKickoffTap = false;
+        fastTimeLeft = FAST_MINUTE_SECONDS;
+        $timerPill.innerHTML = 'До конца: <span id="timer">60</span>с';
+      } else {
+        fastNeedsKickoffTap = true;
+        $timerPill.innerHTML = 'Таймер: <span id="timer">7</span>с';
+      }
+
+      nextQuestion();
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      fastRunActive = mode === "fast";
+      locked = false;
+      stopAllFastTimers();
+      round = 0;
+      score = 0;
+      fastElapsedAnswers = 0;
+      prevWeaponIndex = -1;
+      $round.textContent = "0";
+      updateScorePill();
+      $overlay.classList.remove("show");
+      $wrongHint.classList.remove("show");
+      $wrongHint.textContent = "";
+
+      const fast = mode === "fast";
+      const desc = mode === "desc";
+      const theory = mode === "theory";
+      $modeFast.classList.toggle("active", fast);
+      $modeLearn.classList.toggle("active", mode === "learn");
+      $modeDesc.classList.toggle("active", desc);
+      $modeTheory.classList.toggle("active", theory);
+      $hintBtn.classList.toggle("hidden", theory);
+      $fastOptions.classList.toggle("hidden", !fast);
+      $timerPill.classList.toggle("hidden", !fast);
+      $quizSection.classList.toggle("hidden", theory);
+      $theorySection.classList.toggle("hidden", !theory);
+      if (!fast) {
+        hideFastSummary();
+      }
+
+      if (mode === "fast" || mode === "learn") {
+        $meta.textContent = "Выбери фото, которое соответствует названию сверху (всегда 4 варианта)";
+      } else if (mode === "desc") {
+        $meta.textContent = "Выбери правильное описание отличий (1 из 4)";
+      } else if (mode === "theory") {
+        $meta.textContent = "Теория по автоматам";
+      } else {
+        $meta.textContent = "Режим обучения";
+      }
+
+      if (fast) {
+        startFastRun();
+      } else if (!theory) {
+        nextQuestion();
+      }
+    }
+
+    function revealCorrectCard() {
+      [...$answers.children].forEach(child => {
+        if (child.dataset.correct === "true") {
+          child.classList.add("correct");
+        }
+      });
+    }
+
+    function handleAnswer(card, clickedCorrect, timedOut = false) {
+      if (locked) return;
+      if (mode === "learn" && !clickedCorrect) {
+        if (card) card.classList.add("wrong");
+        $wrongHint.innerHTML = `Подсказка: ${emphasizeDescriptionHtml(currentCorrectWeapon.description, currentCorrectWeapon.name)}`;
+        $wrongHint.classList.add("show");
+        fastElapsedAnswers += 1;
+        updateScorePill();
+        return;
+      }
+
+      locked = true;
+      stopFastTimer();
+      stopFastTimeout();
+
+      if (card) {
+        card.classList.add(clickedCorrect ? "correct" : "wrong");
+      }
+      revealCorrectCard();
+
+      if (mode === "fast") {
+        if (!fastRunActive) return;
+        if (fastVariant === "minute") {
+          if (!fastMinuteStarted) {
+            fastMinuteStarted = true;
+            fastMinuteTimerId = setInterval(() => {
+              fastTimeLeft -= 1;
+              const timerEl = document.getElementById("timer");
+              if (timerEl) timerEl.textContent = String(Math.max(0, fastTimeLeft));
+              if (fastTimeLeft <= 0) {
+                const tone = getAccuracyTone();
+                finishFastRun("Результат", `${score} из ${fastElapsedAnswers}`, tone);
+              }
+            }, 1000);
+          }
+          fastElapsedAnswers += 1;
+          if (clickedCorrect) {
+            score += 1;
+          }
+          updateScorePill();
+          if (fastTimeLeft > 0) {
+            fastTimeoutId = setTimeout(() => {
+              if (fastRunActive) nextQuestion();
+            }, 220);
+          }
+          return;
+        }
+
+        if (fastNeedsKickoffTap) {
+          fastNeedsKickoffTap = false;
+        }
+
+        fastElapsedAnswers += 1;
+        if (!timedOut && clickedCorrect) {
+          score += 1;
+          updateScorePill();
+          fastTimeoutId = setTimeout(() => {
+            if (fastRunActive) nextQuestion();
+          }, 650);
+          return;
+        }
+
+        if (fastVariant === "sudden") {
+          const failReason = timedOut ? "Время вышло" : "Ошибка";
+          updateScorePill();
+          finishFastRun("Результат", `${failReason}. Твой результат: ${score} раундов подряд.`);
+          return;
+        }
+        updateScorePill();
+        fastTimeoutId = setTimeout(() => {
+          if (fastRunActive) nextQuestion();
+        }, 900);
+        return;
+      }
+
+      if (mode === "desc") {
+        fastElapsedAnswers += 1;
+        if (clickedCorrect) {
+          score += 1;
+        }
+        updateScorePill();
+        fastTimeoutId = setTimeout(() => {
+          nextQuestion();
+        }, 1200);
+        return;
+      }
+
+      fastElapsedAnswers += 1;
+      if (clickedCorrect) {
+        score += 1;
+      }
+      updateScorePill();
+      $wrongHint.classList.remove("show");
+      $wrongHint.textContent = "";
+      $overlayCard.classList.toggle("is-wrong", !clickedCorrect);
+      $overlayCard.classList.toggle("desc-top", clickedCorrect);
+      $overlayStatus.classList.remove("hidden");
+      $overlayStatus.classList.toggle("big-ok", clickedCorrect);
+      $overlayStatus.textContent = clickedCorrect ? "ВЕРНО!" : "Неверно";
+      $overlayImage.src = currentCorrectImage || currentCorrectWeapon.image;
+      $overlayImage.alt = currentCorrectWeapon.name;
+      $overlayImage.classList.toggle("click-next", clickedCorrect);
+      $overlayName.textContent = currentCorrectWeapon.name;
+      $overlayDesc.innerHTML = emphasizeDescriptionHtml(currentCorrectWeapon.description, currentCorrectWeapon.name);
+      $overlayNext.classList.toggle("hidden", clickedCorrect);
+      $overlay.classList.add("show");
+    }
+
+    function nextQuestion() {
+      if (mode === "fast" && !fastRunActive) return;
+      locked = false;
+      stopFastTimer();
+      stopFastTimeout();
+      if (!(mode === "fast" && fastVariant === "minute" && fastRunActive)) {
+        stopFastMinuteTimer();
+      }
+      round += 1;
+      $round.textContent = String(round);
+
+      let correctIndex = randomInt(weapons.length);
+      while (correctIndex === prevWeaponIndex) {
+        correctIndex = randomInt(weapons.length);
+      }
+      prevWeaponIndex = correctIndex;
+
+      const optionCount = 4;
+
+      const wrongIndexes = sampleUniqueIndexes(optionCount - 1, correctIndex);
+      const optionIndexes = shuffle([correctIndex, ...wrongIndexes]);
+
+      const correctWeapon = weapons[correctIndex];
+      currentCorrectIndex = correctIndex;
+      currentCorrectWeapon = correctWeapon;
+      const optionImageByIndex = new Map();
+      for (const idx of optionIndexes) {
+        optionImageByIndex.set(idx, pickWeaponImage(weapons[idx], idx));
+      }
+      currentCorrectImage = optionImageByIndex.get(correctIndex) || "";
+      $question.textContent = correctWeapon.name;
+      $overlay.classList.remove("show");
+      $wrongHint.classList.remove("show");
+      $wrongHint.textContent = "";
+      $answers.classList.remove("desc-grid");
+
+      $answers.innerHTML = "";
+      if (mode === "desc") {
+        $answers.classList.add("desc-grid");
+        for (const idx of optionIndexes) {
+          const optionWeapon = weapons[idx];
+          const card = document.createElement("button");
+          card.className = "desc-option";
+          card.type = "button";
+          card.dataset.correct = String(idx === correctIndex);
+          card.innerHTML = emphasizeDescriptionHtml(optionWeapon.description, optionWeapon.name);
+          card.addEventListener("click", () => {
+            handleAnswer(card, idx === currentCorrectIndex);
+          });
+          $answers.appendChild(card);
+        }
+      } else {
+        for (const idx of optionIndexes) {
+          const weapon = weapons[idx];
+          const card = document.createElement("button");
+          card.className = "card";
+          card.type = "button";
+          card.dataset.correct = String(idx === correctIndex);
+
+          card.innerHTML = `
+            <img src="${optionImageByIndex.get(idx) || weapon.image}" alt="${weapon.name}" loading="lazy" />
+          `;
+
+          card.addEventListener("click", () => {
+            handleAnswer(card, idx === currentCorrectIndex);
+          });
+
+          $answers.appendChild(card);
+        }
+      }
+
+      if (mode === "fast") {
+        if (fastVariant === "classic" || fastVariant === "sudden") {
+          if (fastNeedsKickoffTap) {
+            const timerEl = document.getElementById("timer");
+            if (timerEl) timerEl.textContent = String(FAST_ROUND_SECONDS);
+          } else {
+            startQuestionTimer();
+          }
+        } else {
+          // minute mode has only global timer
+        }
+      }
+    }
+
+    if (weapons.length < 4) {
+      $question.textContent = "Нужно минимум 4 элемента в базе";
+    } else {
+      buildTheorySection();
+      setFastVariant("minute");
+      $modeFast.addEventListener("click", () => setMode("fast"));
+      $modeLearn.addEventListener("click", () => setMode("learn"));
+      $modeDesc.addEventListener("click", () => setMode("desc"));
+      $modeTheory.addEventListener("click", () => setMode("theory"));
+      $hintBtn.addEventListener("click", openTheoryModal);
+      $theoryClose.addEventListener("click", closeTheoryModal);
+      $theoryModal.addEventListener("click", (event) => {
+        if (event.target === $theoryModal) closeTheoryModal();
+      });
+      $theoryModalCard.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      $zoomView.addEventListener("click", closeZoomView);
+      $fastOptMinute.addEventListener("click", () => setFastVariant("minute"));
+      $fastOptClassic.addEventListener("click", () => setFastVariant("classic"));
+      $fastOptSudden.addEventListener("click", () => setFastVariant("sudden"));
+      $fastSummaryRestart.addEventListener("click", () => {
+        if (mode === "fast") startFastRun();
+      });
+      $overlayNext.addEventListener("click", () => {
+        if (mode === "learn" && locked) {
+          nextQuestion();
+        }
+      });
+      $overlayImage.addEventListener("click", () => {
+        if (mode === "learn" && locked && !$overlayCard.classList.contains("is-wrong")) {
+          nextQuestion();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+        if (event.key === "1") setMode("fast");
+        else if (event.key === "2") setMode("learn");
+        else if (event.key === "3") setMode("desc");
+        else if (event.key === "4") setMode("theory");
+        else if (event.key === "Escape") {
+          closeZoomView();
+          closeTheoryModal();
+        }
+        else if (event.key === "ArrowRight") {
+          if (!cycleZoomImage(1)) return;
+        }
+        else if (event.key === "ArrowLeft") {
+          if (!cycleZoomImage(-1)) return;
+        }
+        else return;
+        event.preventDefault();
+      });
+      setMode("theory");
+    }
+  </script>
+</body>
+</html>

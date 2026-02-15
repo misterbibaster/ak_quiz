@@ -942,7 +942,7 @@
 
       .grid {
         grid-template-columns: 1fr;
-        gap: 2px;
+        gap: 1px;
         width: 100%;
         margin: 0;
       }
@@ -965,11 +965,10 @@
       }
 
       .card img {
-        object-fit: cover;
-        object-position: center 46%;
+        object-fit: contain;
+        object-position: center center;
         background: linear-gradient(180deg, #141b2a, #0f1523);
-        transform: scale(.88);
-        transform-origin: center center;
+        transform: none;
       }
 
       .card:hover {

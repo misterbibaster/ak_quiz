@@ -2399,7 +2399,7 @@
 
           if (score >= FAST_CLASSIC_TARGET) {
             const averageSeconds = fastRaceSeconds / FAST_CLASSIC_TARGET;
-            const tone = averageSeconds < 4 ? "ok" : (averageSeconds > 7 ? "bad" : "warn");
+            const tone = averageSeconds <= 4 ? "ok" : (averageSeconds > 7 ? "bad" : "warn");
             const payload = getClassicSummaryPayload(tone === "ok" ? 95 : (tone === "warn" ? 80 : 60));
             finishFastRun(payload.title, payload.text, payload.tone, `Время: ${formatClock(fastRaceSeconds)}`);
             $fastSummaryTheory.classList.toggle("hidden", !payload.showTheoryButton);

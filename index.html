@@ -956,11 +956,11 @@
         min-height: 0;
         align-content: start;
         row-gap: 6px;
-        margin-top: -4px;
+        margin-top: 0;
       }
 
       .card {
-        border-radius: 8px;
+        border-radius: 0;
         border: 0;
         aspect-ratio: 16 / 7;
         max-height: none;
@@ -970,11 +970,20 @@
         align-items: center;
         justify-content: center;
         background: transparent;
+        overflow: visible;
         box-shadow: none;
       }
 
       .app.mobile-game-mode .title {
         font-size: clamp(1.24rem, 6.8vw, 1.74rem);
+      }
+
+      .card-media {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 4px;
+        background: linear-gradient(180deg, #141b2a, #0f1523);
       }
 
       .card img {
@@ -983,8 +992,8 @@
         max-width: none;
         object-fit: unset;
         object-position: unset;
-        border-radius: 4px;
-        background: linear-gradient(180deg, #141b2a, #0f1523);
+        border-radius: 0;
+        background: transparent;
         transform: none;
       }
 
@@ -2188,7 +2197,9 @@
           const imageSrc = optionImageByIndex.get(idx) || weapon.image;
 
           card.innerHTML = `
-            <img src="${imageSrc}" alt="${weapon.name}" loading="lazy" />
+            <div class="card-media">
+              <img src="${imageSrc}" alt="${weapon.name}" loading="lazy" />
+            </div>
             <div class="card-wrong-overlay">${weapon.name}</div>
           `;
 

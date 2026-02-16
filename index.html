@@ -284,43 +284,65 @@
     .fast-debug-btn.bad { background: rgba(197,48,48,.35); }
 
     .fast-summary {
-      margin-top: 12px;
+      position: fixed;
+      left: calc(10px + env(safe-area-inset-left));
+      right: calc(10px + env(safe-area-inset-right));
+      top: calc(10px + env(safe-area-inset-top));
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      z-index: 20;
       border: 1px solid rgba(31,157,85,.55);
-      border-radius: 12px;
-      background: rgba(31,157,85,.2);
-      color: #d9ffe8;
-      padding: 12px;
+      border-radius: 16px;
+      background: radial-gradient(circle at 50% 42%, rgba(88, 244, 154, .6) 0%, rgba(31,157,85,.46) 42%, rgba(13,63,39,.92) 100%);
+      color: #f3fff8;
+      padding: clamp(16px, 4.5vw, 32px);
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-family: "Open Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     }
 
     .fast-summary.ok {
       border-color: rgba(31,157,85,.55);
-      background: rgba(31,157,85,.2);
-      color: #d9ffe8;
+      background: radial-gradient(circle at 50% 42%, rgba(88, 244, 154, .62) 0%, rgba(31,157,85,.48) 42%, rgba(13,63,39,.93) 100%);
+      color: #f3fff8;
     }
 
     .fast-summary.warn {
       border-color: rgba(246,195,73,.65);
-      background: rgba(246,195,73,.2);
-      color: #ffeab8;
+      background: radial-gradient(circle at 50% 42%, rgba(255, 225, 102, .68) 0%, rgba(228,167,42,.5) 42%, rgba(92,67,18,.92) 100%);
+      color: #fff6db;
     }
 
     .fast-summary.bad {
       border-color: rgba(197,48,48,.55);
-      background: rgba(197,48,48,.2);
-      color: #ffd0d0;
+      background: radial-gradient(circle at 50% 42%, rgba(232, 79, 79, .66) 0%, rgba(147,39,39,.52) 42%, rgba(63,16,16,.94) 100%);
+      color: #ffe7e7;
     }
 
     .fast-summary-title {
-      margin: 0 0 6px;
-      font-weight: 800;
-      font-size: 1.05rem;
+      margin: 0 0 12px;
+      font-weight: 900;
+      font-size: clamp(1.45rem, 4.6vw, 2.35rem);
+      line-height: 1.08;
+      letter-spacing: .01em;
     }
 
     .fast-summary-text {
-      margin: 0 0 10px;
+      margin: 0 0 14px;
       line-height: 1.35;
       white-space: pre-line;
+      font-size: clamp(1rem, 2.4vw, 1.2rem);
+    }
+
+    .fast-summary-text .summary-main {
+      font-weight: 400;
+    }
+
+    .fast-summary-text .summary-outro {
+      display: block;
+      margin-top: 10px;
+      font-weight: 800;
     }
 
     .fast-summary-actions {
@@ -334,15 +356,36 @@
       background: rgba(255,255,255,.08);
       color: #f1f8ff;
       border-radius: 10px;
-      padding: 8px 12px;
+      min-width: min(320px, 92%);
+      min-height: 44px;
+      padding: 10px 14px;
       cursor: pointer;
-      font-weight: 700;
+      font-weight: 900;
+      font-size: clamp(.96rem, 2.1vw, 1.08rem);
+      font-family: "Open Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     }
 
     .fast-summary-btn.secondary {
       background: rgba(140,145,156,.28);
       border-color: rgba(194,198,207,.5);
       color: #e6eaf2;
+    }
+
+    .fast-summary.bad .fast-summary-btn {
+      min-width: min(320px, 92%);
+      min-height: 44px;
+    }
+
+    .fast-summary.bad .fast-summary-btn:not(.secondary) {
+      background: #fff;
+      border-color: #fff;
+      color: #1a1a1a;
+    }
+
+    .fast-summary.bad .fast-summary-btn.secondary {
+      background: transparent;
+      border-color: rgba(255,255,255,.72);
+      color: #fff;
     }
 
     .mode-btn {
@@ -1983,8 +2026,19 @@
     }
 
     function showFastSummary(title, text, tone = "ok") {
+      const normalizedText = String(text ?? "").trim();
+      const paragraphs = normalizedText
+        ? normalizedText.split(/\n\s*\n/).map(part => part.trim()).filter(Boolean)
+        : [];
+      const outro = paragraphs.length > 1 ? paragraphs.pop() : "";
+      const mainText = paragraphs.join("\n\n");
+
       $fastSummaryTitle.textContent = title;
-      $fastSummaryText.textContent = text;
+      if (outro) {
+        $fastSummaryText.innerHTML = `<span class="summary-main">${escapeHtml(mainText)}</span><span class="summary-outro">${escapeHtml(outro)}</span>`;
+      } else {
+        $fastSummaryText.innerHTML = `<span class="summary-main">${escapeHtml(normalizedText)}</span>`;
+      }
       $fastSummary.classList.remove("ok", "warn", "bad");
       $fastSummary.classList.add(tone);
       $fastSummary.classList.remove("hidden");

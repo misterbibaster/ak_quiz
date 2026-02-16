@@ -123,6 +123,26 @@
       box-shadow: 0 0 0 3px rgba(197,48,48,.33) inset;
     }
 
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .12s ease;
+      z-index: 1;
+    }
+
+    .card.correct::after {
+      opacity: 1;
+      background: rgba(31,157,85,.24);
+    }
+
+    .card.wrong::after {
+      opacity: 1;
+      background: rgba(197,48,48,.24);
+    }
+
     .card-wrong-overlay {
       position: absolute;
       inset: 0;
@@ -139,6 +159,7 @@
       opacity: 0;
       transition: opacity .12s ease;
       pointer-events: none;
+      z-index: 2;
     }
 
     .card.wrong .card-wrong-overlay {
@@ -278,6 +299,13 @@
     .fast-summary-text {
       margin: 0 0 10px;
       line-height: 1.35;
+      white-space: pre-line;
+    }
+
+    .fast-summary-actions {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
     }
 
     .fast-summary-btn {
@@ -288,6 +316,12 @@
       padding: 8px 12px;
       cursor: pointer;
       font-weight: 700;
+    }
+
+    .fast-summary-btn.secondary {
+      background: rgba(140,145,156,.28);
+      border-color: rgba(194,198,207,.5);
+      color: #e6eaf2;
     }
 
     .mode-btn {
@@ -1173,7 +1207,7 @@
         <p class="mobile-menu-label">Режимы на скорость</p>
         <div class="fast-options">
           <button class="fast-opt-btn" id="mobileFastMinute" type="button">За минуту</button>
-          <button class="fast-opt-btn" id="mobileFastClassic" type="button">Классика 7с</button>
+          <button class="fast-opt-btn" id="mobileFastClassic" type="button">25 побед</button>
           <button class="fast-opt-btn" id="mobileFastSudden" type="button">До ошибки</button>
         </div>
       </div>
@@ -1192,7 +1226,7 @@
       <div id="quizSection">
         <div class="fast-options hidden" id="fastOptions">
           <button class="fast-opt-btn active" id="fastOptMinute" type="button">За минуту</button>
-          <button class="fast-opt-btn" id="fastOptClassic" type="button">Классика 7с</button>
+          <button class="fast-opt-btn" id="fastOptClassic" type="button">25 побед</button>
           <button class="fast-opt-btn" id="fastOptSudden" type="button">До ошибки</button>
         </div>
         <section class="grid" id="answers"></section>
@@ -1200,7 +1234,10 @@
         <div class="fast-summary hidden" id="fastSummary">
           <p class="fast-summary-title" id="fastSummaryTitle"></p>
           <p class="fast-summary-text" id="fastSummaryText"></p>
-          <button class="fast-summary-btn" id="fastSummaryRestart" type="button">Еще раз</button>
+          <div class="fast-summary-actions">
+            <button class="fast-summary-btn" id="fastSummaryRestart" type="button">ПОВТОРИТЬ</button>
+            <button class="fast-summary-btn secondary hidden" id="fastSummaryTheory" type="button">ТЕОРИЯ</button>
+          </div>
         </div>
 
         <div class="controls">
@@ -1467,7 +1504,7 @@
         images: [
           "quiz_assets_ak/current/93c3d1600ce4.jpg"
         ],
-        description: "Калибр 7,62х39: сверх-короткий, Пикатинни на крышке, вывешенное цевьё с пикатинни, телескопический приклад, приклад наклонён вниз, магазин 7.62 \"банан\", диоптрический прицел, пламегас щелевой • быстросъёмный, крышка на шарнире и сзади фиксируется возвратной пружиной."
+        description: "Калибр 7,62х39: субкомпактный, Пикатинни на крышке, вывешенное цевьё с пикатинни, телескопический приклад, приклад наклонён вниз, магазин 7.62 \"банан\", диоптрический прицел, пламегас щелевой • быстросъёмный, крышка на шарнире и сзади фиксируется возвратной пружиной."
       },
       {
         name: "АК-19",
@@ -1506,6 +1543,7 @@
     const $fastSummaryTitle = document.getElementById("fastSummaryTitle");
     const $fastSummaryText = document.getElementById("fastSummaryText");
     const $fastSummaryRestart = document.getElementById("fastSummaryRestart");
+    const $fastSummaryTheory = document.getElementById("fastSummaryTheory");
     const $modeFast = document.getElementById("modeFast");
     const $modeLearn = document.getElementById("modeLearn");
     const $modeDesc = document.getElementById("modeDesc");
@@ -1549,6 +1587,7 @@
 
     const FAST_ROUND_SECONDS = 7;
     const FAST_MINUTE_SECONDS = 60;
+    const FAST_CLASSIC_TARGET = 25;
     const ANSWER_FEEDBACK_MS = 520;
 
     let mode = "learn";
@@ -1565,7 +1604,6 @@
     let fastMinuteTimerId = null;
     let fastMinuteStarted = false;
     let fastRunActive = false;
-    let fastNeedsKickoffTap = false;
     let fastElapsedAnswers = 0;
     let fastTimeLeft = FAST_ROUND_SECONDS;
     let zoomImages = [];
@@ -1583,7 +1621,7 @@
     };
     const fastVariantLabelMap = {
       minute: "За минуту",
-      classic: "Классика 7с",
+      classic: "25 побед",
       sudden: "До ошибки"
     };
 
@@ -1677,7 +1715,7 @@
       "АК-12": ["Пикатинни на крышке", "вывешенное цевьё с пикатинни", "диоптрический прицел", "крышка на шарнире и сзади фиксируется возвратной пружиной"],
       "АК-15": ["Пикатинни на крышке", "вывешенное цевьё с пикатинни", "магазин 7.62 \"банан\"", "диоптрический прицел", "крышка на шарнире и сзади фиксируется возвратной пружиной"],
       "АК-15К": ["укороченный", "газоотводная трубка совмещена с мушкой", "магазин 7.62 \"банан\""],
-      "АК-15СК": ["сверх-короткий", "приклад наклонён вниз", "магазин 7.62 \"банан\""],
+      "АК-15СК": ["субкомпактный", "приклад наклонён вниз", "магазин 7.62 \"банан\""],
       "АК-19": ["Пикатинни на крышке", "вывешенное цевьё с пикатинни", "почти прямой магазин 5.56", "диоптрический прицел", "крышка на шарнире и сзади фиксируется возвратной пружиной"],
       "АК-19К": ["укороченный", "почти прямой магазин 5.56", "газоотводная трубка совмещена с мушкой"]
     };
@@ -1926,6 +1964,8 @@
       $fastSummary.classList.remove("ok", "warn", "bad");
       $fastSummaryTitle.textContent = "";
       $fastSummaryText.textContent = "";
+      $fastSummaryTheory.classList.add("hidden");
+      $fastSummaryRestart.textContent = "ПОВТОРИТЬ";
     }
 
     function setFastVariant(nextVariant) {
@@ -1963,10 +2003,38 @@
       return "bad";
     }
 
+    function getClassicSummaryPayload() {
+      const percent = fastElapsedAnswers > 0 ? (score / fastElapsedAnswers) * 100 : 0;
+      if (percent >= 90) {
+        return {
+          tone: "ok",
+          title: "ПОБЕДА ЗА НАМИ!",
+          text: "Ты пиздец чё за тип. Красавчик, гордость страны\n\nСможешь повторить?",
+          showTheoryButton: false
+        };
+      }
+      if (percent >= 75) {
+        return {
+          tone: "warn",
+          title: "Хорошо!",
+          text: "Катка была потной, но ты справился\n\nТренируйся дальше, регулярно ходи в столовую и однажды ты победишь, чемпион\n\nГотов улучшить результат?",
+          showTheoryButton: false
+        };
+      }
+      return {
+        tone: "bad",
+        title: "Ну ёбана...",
+        text: "Да, это жёстко. Но кто говорил, что будет легко?!\n\nЕсли тебя не сломало это поражение, то давай ещё раз. Или изучи теорию и приходи заново\n\nТвой выбор?",
+        showTheoryButton: true
+      };
+    }
+
     function finishFastRun(title, text, tone = "ok") {
       fastRunActive = false;
       stopAllFastTimers();
       showFastSummary(title, text, tone);
+      $fastSummaryTheory.classList.add("hidden");
+      $fastSummaryRestart.textContent = "ПОВТОРИТЬ";
       $timerPill.classList.add("hidden");
       locked = true;
     }
@@ -1985,11 +2053,9 @@
       $timerPill.classList.remove("hidden");
 
       if (fastVariant === "minute") {
-        fastNeedsKickoffTap = false;
         fastTimeLeft = FAST_MINUTE_SECONDS;
         $timerPill.innerHTML = 'До конца: <span id="timer">60</span>с';
       } else {
-        fastNeedsKickoffTap = true;
         $timerPill.innerHTML = 'Таймер: <span id="timer">7</span>с';
       }
 
@@ -2108,14 +2174,26 @@
           return;
         }
 
-        if (fastNeedsKickoffTap) {
-          fastNeedsKickoffTap = false;
-        }
-
         fastElapsedAnswers += 1;
         if (!timedOut && clickedCorrect) {
           score += 1;
-          updateScorePill();
+        }
+        updateScorePill();
+
+        if (fastVariant === "classic") {
+          if (score >= FAST_CLASSIC_TARGET) {
+            const result = getClassicSummaryPayload();
+            finishFastRun(result.title, result.text, result.tone);
+            $fastSummaryTheory.classList.toggle("hidden", !result.showTheoryButton);
+            return;
+          }
+          fastTimeoutId = setTimeout(() => {
+            if (fastRunActive) nextQuestion();
+          }, ANSWER_FEEDBACK_MS);
+          return;
+        }
+
+        if (!timedOut && clickedCorrect) {
           fastTimeoutId = setTimeout(() => {
             if (fastRunActive) nextQuestion();
           }, ANSWER_FEEDBACK_MS);
@@ -2124,11 +2202,9 @@
 
         if (fastVariant === "sudden") {
           const failReason = timedOut ? "Время вышло" : "Ошибка";
-          updateScorePill();
           finishFastRun("Результат", `${failReason}. Твой результат: ${score} раундов подряд.`);
           return;
         }
-        updateScorePill();
         fastTimeoutId = setTimeout(() => {
           if (fastRunActive) nextQuestion();
         }, Math.max(ANSWER_FEEDBACK_MS, 700));
@@ -2243,12 +2319,7 @@
 
       if (mode === "fast") {
         if (fastVariant === "classic" || fastVariant === "sudden") {
-          if (fastNeedsKickoffTap) {
-            const timerEl = document.getElementById("timer");
-            if (timerEl) timerEl.textContent = String(FAST_ROUND_SECONDS);
-          } else {
-            startQuestionTimer();
-          }
+          startQuestionTimer();
         } else {
           // minute mode has only global timer
         }
@@ -2330,6 +2401,9 @@
       $fastOptSudden.addEventListener("click", () => setFastVariant("sudden"));
       $fastSummaryRestart.addEventListener("click", () => {
         if (mode === "fast") startFastRun();
+      });
+      $fastSummaryTheory.addEventListener("click", () => {
+        setMode("theory");
       });
       $overlayNext.addEventListener("click", () => {
         if (mode === "learn" && locked) {

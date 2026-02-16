@@ -303,6 +303,7 @@
       justify-content: center;
       font-family: "Open Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
       backdrop-filter: blur(4px);
+      --summary-content-width: min(760px, 92%);
     }
 
     .fast-summary.ok {
@@ -335,6 +336,8 @@
       background: rgba(0,0,0,.28);
       border: 1px solid rgba(255,255,255,.22);
       backdrop-filter: blur(2px);
+      width: fit-content;
+      max-width: var(--summary-content-width);
     }
 
     .fast-summary-score {
@@ -345,6 +348,8 @@
       letter-spacing: .01em;
       color: #ffffff;
       text-shadow: 0 2px 10px rgba(0,0,0,.35);
+      width: var(--summary-content-width);
+      align-self: center;
     }
 
     .fast-summary-text {
@@ -358,6 +363,8 @@
       border-radius: 12px;
       padding: 10px 12px;
       text-shadow: 0 1px 1px rgba(0,0,0,.32);
+      width: var(--summary-content-width);
+      align-self: center;
     }
 
     .fast-summary-text .summary-main {
@@ -374,6 +381,8 @@
       display: grid;
       gap: 8px;
       justify-items: center;
+      width: var(--summary-content-width);
+      align-self: center;
     }
 
     .fast-summary-btn {
@@ -381,7 +390,7 @@
       background: rgba(255,255,255,.08);
       color: #f1f8ff;
       border-radius: 10px;
-      min-width: min(320px, 92%);
+      min-width: min(340px, 100%);
       min-height: 44px;
       padding: 10px 14px;
       cursor: pointer;
@@ -406,7 +415,7 @@
     }
 
     .fast-summary.bad .fast-summary-btn {
-      min-width: min(320px, 92%);
+      min-width: min(340px, 100%);
       min-height: 44px;
     }
 

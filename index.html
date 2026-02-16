@@ -2006,7 +2006,9 @@
       $mobileFastMinute.classList.toggle("active", fastVariant === "minute");
       $mobileFastClassic.classList.toggle("active", fastVariant === "classic");
       $mobileFastSudden.classList.toggle("active", fastVariant === "sudden");
-      const label = modeLabelMap[mode] || "Обучающий";
+      const label = fast
+        ? (fastVariantLabelMap[fastVariant] || modeLabelMap.fast)
+        : (modeLabelMap[mode] || "Обучающий");
       $mobileModeTrigger.textContent = label;
       $mobileModeTop.textContent = label;
       $theoryModeTrigger.textContent = "Выбор режима";

@@ -263,25 +263,6 @@
       color: #ffdea5;
     }
 
-    .fast-test-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin: 0 0 10px;
-    }
-
-    .fast-test-btn {
-      border: 1px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.08);
-      color: #e8edf8;
-      padding: 6px 10px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-weight: 650;
-      font-size: .8rem;
-    }
-
     .fast-summary {
       position: fixed;
       left: calc(10px + env(safe-area-inset-left));
@@ -1048,20 +1029,6 @@
         font-size: .8rem;
       }
 
-      .fast-test-buttons {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 6px;
-        margin: 0 0 8px;
-      }
-
-      .fast-test-btn {
-        width: 100%;
-        min-height: 34px;
-        padding: 7px 4px;
-        font-size: .75rem;
-      }
-
       .content-shell {
         flex: 1 1 auto;
         min-height: 0;
@@ -1356,11 +1323,6 @@
           <button class="fast-opt-btn" id="fastOptMinute" type="button">За минуту</button>
           <button class="fast-opt-btn" id="fastOptSudden" type="button">До ошибки</button>
           <button class="fast-opt-btn" id="fastOptSpeed25" type="button">25 на время</button>
-        </div>
-        <div class="fast-test-buttons hidden" id="fastTestButtons">
-          <button class="fast-test-btn" id="fastTestGreen" type="button">Тест зелёный</button>
-          <button class="fast-test-btn" id="fastTestYellow" type="button">Тест жёлтый</button>
-          <button class="fast-test-btn" id="fastTestRed" type="button">Тест красный</button>
         </div>
         <section class="grid" id="answers"></section>
         <div class="wrong-hint" id="wrongHint"></div>
@@ -1673,10 +1635,6 @@
     const $fastOptClassic = document.getElementById("fastOptClassic");
     const $fastOptSudden = document.getElementById("fastOptSudden");
     const $fastOptSpeed25 = document.getElementById("fastOptSpeed25");
-    const $fastTestButtons = document.getElementById("fastTestButtons");
-    const $fastTestGreen = document.getElementById("fastTestGreen");
-    const $fastTestYellow = document.getElementById("fastTestYellow");
-    const $fastTestRed = document.getElementById("fastTestRed");
     const $timerPill = document.getElementById("timerPill");
     const $fastSummary = document.getElementById("fastSummary");
     const $fastSummaryTitle = document.getElementById("fastSummaryTitle");
@@ -2164,8 +2122,6 @@
       $fastOptClassic.classList.toggle("active", fastVariant === "classic");
       $fastOptSudden.classList.toggle("active", fastVariant === "sudden");
       $fastOptSpeed25.classList.toggle("active", fastVariant === "speed25");
-      const showDebugTests = mode === "fast" && (fastVariant === "classic" || fastVariant === "speed25");
-      $fastTestButtons.classList.toggle("hidden", !showDebugTests);
       syncMobileControls();
       if (mode === "fast") {
         startFastRun();
@@ -2295,7 +2251,6 @@
       $hintBtn.classList.toggle("hidden", theory || (isMobileViewport() && fast));
       $fastOptions.classList.toggle("hidden", !fast);
       $timerPill.classList.toggle("hidden", !fast);
-      $fastTestButtons.classList.toggle("hidden", !(fast && (fastVariant === "classic" || fastVariant === "speed25")));
       $quizSection.classList.toggle("hidden", theory);
       $theorySection.classList.toggle("hidden", !theory);
       $appRoot.classList.toggle("mobile-theory-scroll", mobile && theory);
@@ -2646,18 +2601,6 @@
       $fastOptClassic.addEventListener("click", () => setFastVariant("classic"));
       $fastOptSudden.addEventListener("click", () => setFastVariant("sudden"));
       $fastOptSpeed25.addEventListener("click", () => setFastVariant("speed25"));
-      const showFastDebugSummary = (tone) => {
-        const percent = tone === "ok" ? 95 : (tone === "warn" ? 80 : 60);
-        const payload = getClassicSummaryPayload(percent);
-        const scoreLabel = fastVariant === "speed25"
-          ? (tone === "ok" ? "Время: 02:00" : (tone === "warn" ? "Время: 02:30" : "Время: 03:10"))
-          : (tone === "ok" ? "25 из 25" : (tone === "warn" ? "20 из 25" : "16 из 25"));
-        finishFastRun(payload.title, payload.text, payload.tone, scoreLabel);
-        $fastSummaryTheory.classList.toggle("hidden", !payload.showTheoryButton);
-      };
-      $fastTestGreen.addEventListener("click", () => showFastDebugSummary("ok"));
-      $fastTestYellow.addEventListener("click", () => showFastDebugSummary("warn"));
-      $fastTestRed.addEventListener("click", () => showFastDebugSummary("bad"));
       $fastSummaryRestart.addEventListener("click", () => {
         if (mode === "fast") startFastRun();
       });

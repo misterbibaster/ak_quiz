@@ -2341,7 +2341,7 @@
         updateScorePill();
 
         if (fastVariant === "classic") {
-          if (score >= FAST_CLASSIC_TARGET) {
+          if (fastElapsedAnswers >= FAST_CLASSIC_TARGET) {
             const result = getClassicSummaryPayload();
             finishFastRun(result.title, result.text, result.tone);
             $fastSummaryTheory.classList.toggle("hidden", !result.showTheoryButton);

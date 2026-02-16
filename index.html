@@ -174,7 +174,7 @@
       flex-wrap: wrap;
       color: var(--muted);
       font-size: 0.95rem;
-      z-index: 30;
+      z-index: 10020;
     }
 
     .pill {
@@ -1055,7 +1055,7 @@
         left: calc(6px + env(safe-area-inset-left));
         right: calc(6px + env(safe-area-inset-right));
         bottom: calc(6px + env(safe-area-inset-bottom));
-        z-index: 30;
+        z-index: 10020;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 6px;
@@ -1070,7 +1070,7 @@
 
       .theory-controls {
         grid-template-columns: 1fr;
-        z-index: 31;
+        z-index: 10021;
       }
 
       .wrong-hint {
@@ -2136,7 +2136,7 @@
     }
 
     function updateScorePill() {
-      if (mode === "fast" && fastVariant === "classic") {
+      if (mode === "fast" && (fastVariant === "classic" || fastVariant === "speed25")) {
         $score.textContent = `${score} из ${FAST_CLASSIC_TARGET}`;
       } else {
         $score.textContent = `${score} из ${fastElapsedAnswers}`;

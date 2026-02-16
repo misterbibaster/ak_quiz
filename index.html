@@ -1227,8 +1227,8 @@
       <div class="mobile-menu-section fast hidden" id="mobileFastWrap">
         <p class="mobile-menu-label">Режимы на скорость</p>
         <div class="fast-options">
-          <button class="fast-opt-btn" id="mobileFastMinute" type="button">За минуту</button>
           <button class="fast-opt-btn" id="mobileFastClassic" type="button">25 побед</button>
+          <button class="fast-opt-btn" id="mobileFastMinute" type="button">За минуту</button>
           <button class="fast-opt-btn" id="mobileFastSudden" type="button">До ошибки</button>
         </div>
       </div>
@@ -1246,8 +1246,8 @@
     <div class="content-shell" id="contentShell">
       <div id="quizSection">
         <div class="fast-options hidden" id="fastOptions">
-          <button class="fast-opt-btn active" id="fastOptMinute" type="button">За минуту</button>
-          <button class="fast-opt-btn" id="fastOptClassic" type="button">25 побед</button>
+          <button class="fast-opt-btn active" id="fastOptClassic" type="button">25 побед</button>
+          <button class="fast-opt-btn" id="fastOptMinute" type="button">За минуту</button>
           <button class="fast-opt-btn" id="fastOptSudden" type="button">До ошибки</button>
         </div>
         <div class="fast-debug hidden" id="fastDebug">
@@ -1621,7 +1621,7 @@
     const ANSWER_FEEDBACK_MS = 520;
 
     let mode = "learn";
-    let fastVariant = "minute";
+    let fastVariant = "classic";
     let prevWeaponIndex = -1;
     let round = 0;
     let score = 0;
@@ -2381,7 +2381,7 @@
       $question.textContent = "Нужно минимум 4 элемента в базе";
     } else {
       buildTheorySection();
-      setFastVariant("minute");
+      setFastVariant("classic");
       $modeFast.addEventListener("click", () => setMode("fast"));
       $modeLearn.addEventListener("click", () => setMode("learn"));
       $modeDesc.addEventListener("click", () => setMode("desc"));

@@ -2111,7 +2111,11 @@
     }
 
     function updateScorePill() {
-      $score.textContent = `${score} из ${fastElapsedAnswers}`;
+      if (mode === "fast" && fastVariant === "classic") {
+        $score.textContent = `${score} из ${FAST_CLASSIC_TARGET}`;
+      } else {
+        $score.textContent = `${score} из ${fastElapsedAnswers}`;
+      }
       $scorePill.classList.remove("ok", "warn", "bad");
       if (fastElapsedAnswers === 0) return;
       const percent = (score / fastElapsedAnswers) * 100;

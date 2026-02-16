@@ -262,6 +262,27 @@
       color: #ffdea5;
     }
 
+    .fast-debug {
+      margin: 8px 0 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .fast-debug-btn {
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      padding: 6px 8px;
+      font-size: .76rem;
+      font-weight: 700;
+      color: #f5f8ff;
+      cursor: pointer;
+    }
+
+    .fast-debug-btn.ok { background: rgba(31,157,85,.35); }
+    .fast-debug-btn.warn { background: rgba(246,195,73,.35); color: #2b2411; }
+    .fast-debug-btn.bad { background: rgba(197,48,48,.35); }
+
     .fast-summary {
       margin-top: 12px;
       border: 1px solid rgba(31,157,85,.55);
@@ -1229,6 +1250,11 @@
           <button class="fast-opt-btn" id="fastOptClassic" type="button">25 побед</button>
           <button class="fast-opt-btn" id="fastOptSudden" type="button">До ошибки</button>
         </div>
+        <div class="fast-debug hidden" id="fastDebug">
+          <button class="fast-debug-btn ok" id="fastDebugOk" type="button">Тест зелёный</button>
+          <button class="fast-debug-btn warn" id="fastDebugWarn" type="button">Тест жёлтый</button>
+          <button class="fast-debug-btn bad" id="fastDebugBad" type="button">Тест красный</button>
+        </div>
         <section class="grid" id="answers"></section>
         <div class="wrong-hint" id="wrongHint"></div>
         <div class="fast-summary hidden" id="fastSummary">
@@ -1538,6 +1564,10 @@
     const $fastOptMinute = document.getElementById("fastOptMinute");
     const $fastOptClassic = document.getElementById("fastOptClassic");
     const $fastOptSudden = document.getElementById("fastOptSudden");
+    const $fastDebug = document.getElementById("fastDebug");
+    const $fastDebugOk = document.getElementById("fastDebugOk");
+    const $fastDebugWarn = document.getElementById("fastDebugWarn");
+    const $fastDebugBad = document.getElementById("fastDebugBad");
     const $timerPill = document.getElementById("timerPill");
     const $fastSummary = document.getElementById("fastSummary");
     const $fastSummaryTitle = document.getElementById("fastSummaryTitle");
@@ -1604,6 +1634,7 @@
     let fastMinuteTimerId = null;
     let fastMinuteStarted = false;
     let fastRunActive = false;
+    let fastNeedsKickoffTap = false;
     let fastElapsedAnswers = 0;
     let fastTimeLeft = FAST_ROUND_SECONDS;
     let zoomImages = [];
@@ -2003,8 +2034,10 @@
       return "bad";
     }
 
-    function getClassicSummaryPayload() {
-      const percent = fastElapsedAnswers > 0 ? (score / fastElapsedAnswers) * 100 : 0;
+    function getClassicSummaryPayload(percentOverride = null) {
+      const percent = percentOverride === null
+        ? (fastElapsedAnswers > 0 ? (score / fastElapsedAnswers) * 100 : 0)
+        : percentOverride;
       if (percent >= 90) {
         return {
           tone: "ok",
@@ -2039,6 +2072,13 @@
       locked = true;
     }
 
+    function showFastSummaryPreview(tone) {
+      const previewPercentByTone = { ok: 95, warn: 80, bad: 60 };
+      const payload = getClassicSummaryPayload(previewPercentByTone[tone] ?? 95);
+      finishFastRun(payload.title, payload.text, payload.tone);
+      $fastSummaryTheory.classList.toggle("hidden", !payload.showTheoryButton);
+    }
+
     function startFastRun() {
       fastRunActive = true;
       locked = false;
@@ -2054,8 +2094,10 @@
 
       if (fastVariant === "minute") {
         fastTimeLeft = FAST_MINUTE_SECONDS;
+        fastNeedsKickoffTap = false;
         $timerPill.innerHTML = 'До конца: <span id="timer">60</span>с';
       } else {
+        fastNeedsKickoffTap = true;
         $timerPill.innerHTML = 'Таймер: <span id="timer">7</span>с';
       }
 
@@ -2087,6 +2129,7 @@
       $modeTheory.classList.toggle("active", theory);
       $hintBtn.classList.toggle("hidden", theory || (isMobileViewport() && fast));
       $fastOptions.classList.toggle("hidden", !fast);
+      $fastDebug.classList.toggle("hidden", !fast);
       $timerPill.classList.toggle("hidden", !fast);
       $quizSection.classList.toggle("hidden", theory);
       $theorySection.classList.toggle("hidden", !theory);
@@ -2148,6 +2191,9 @@
 
       if (mode === "fast") {
         if (!fastRunActive) return;
+        if (fastVariant !== "minute" && fastNeedsKickoffTap) {
+          fastNeedsKickoffTap = false;
+        }
         if (fastVariant === "minute") {
           if (!fastMinuteStarted) {
             fastMinuteStarted = true;
@@ -2319,7 +2365,12 @@
 
       if (mode === "fast") {
         if (fastVariant === "classic" || fastVariant === "sudden") {
-          startQuestionTimer();
+          if (fastNeedsKickoffTap) {
+            const timerEl = document.getElementById("timer");
+            if (timerEl) timerEl.textContent = String(FAST_ROUND_SECONDS);
+          } else {
+            startQuestionTimer();
+          }
         } else {
           // minute mode has only global timer
         }
@@ -2399,6 +2450,9 @@
       $fastOptMinute.addEventListener("click", () => setFastVariant("minute"));
       $fastOptClassic.addEventListener("click", () => setFastVariant("classic"));
       $fastOptSudden.addEventListener("click", () => setFastVariant("sudden"));
+      $fastDebugOk.addEventListener("click", () => showFastSummaryPreview("ok"));
+      $fastDebugWarn.addEventListener("click", () => showFastSummaryPreview("warn"));
+      $fastDebugBad.addEventListener("click", () => showFastSummaryPreview("bad"));
       $fastSummaryRestart.addEventListener("click", () => {
         if (mode === "fast") startFastRun();
       });

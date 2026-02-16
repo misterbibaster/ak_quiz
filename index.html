@@ -739,6 +739,10 @@
       color: #ffd98d;
     }
 
+    .theory-controls {
+      display: none;
+    }
+
     @media (min-width: 881px) {
       .card {
         display: flex;
@@ -934,6 +938,11 @@
         background: rgba(15,18,24,.82);
         backdrop-filter: blur(4px);
         font-size: .76rem;
+      }
+
+      .theory-controls {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        z-index: 7;
       }
 
       .wrong-hint {
@@ -1203,6 +1212,12 @@
       <div class="theory-section hidden" id="theorySection">
         <p class="meta">Теория: фото и ключевые отличия моделей</p>
         <section class="theory-grid" id="theoryGridMain"></section>
+      </div>
+      <div class="controls theory-controls hidden" id="theoryControls">
+        <button class="pill mode-pill" id="theoryNavFast" type="button">Скорость</button>
+        <button class="pill mode-pill" id="theoryNavLearn" type="button">Обучающий</button>
+        <button class="pill mode-pill" id="theoryNavDesc" type="button">Описания</button>
+        <button class="pill mode-pill active" id="theoryNavTheory" type="button">Теория</button>
       </div>
     </div>
   </main>
@@ -1512,6 +1527,11 @@
     const $mobileFastSudden = document.getElementById("mobileFastSudden");
     const $quizSection = document.getElementById("quizSection");
     const $theorySection = document.getElementById("theorySection");
+    const $theoryControls = document.getElementById("theoryControls");
+    const $theoryNavFast = document.getElementById("theoryNavFast");
+    const $theoryNavLearn = document.getElementById("theoryNavLearn");
+    const $theoryNavDesc = document.getElementById("theoryNavDesc");
+    const $theoryNavTheory = document.getElementById("theoryNavTheory");
     const $theoryModal = document.getElementById("theoryModal");
     const $theoryEdgeLeft = document.getElementById("theoryEdgeLeft");
     const $theoryEdgeRight = document.getElementById("theoryEdgeRight");
@@ -1818,13 +1838,18 @@
       $mobileFastWrap.classList.toggle("hidden", !fast);
       $mobileHintBtn.classList.toggle("hidden", fast || theory);
       $mobileModeTrigger.classList.toggle("hidden", !mobile);
-      $mobileModeTop.classList.toggle("hidden", !(mobile && theory));
+      $mobileModeTop.classList.add("hidden");
       $mobileModeMenu.classList.remove("from-top");
+      $theoryControls.classList.toggle("hidden", !(mobile && theory));
       $roundPill.classList.toggle("hidden", mobile);
       $mobileModeFast.classList.toggle("active", fast);
       $mobileModeLearn.classList.toggle("active", mode === "learn");
       $mobileModeDesc.classList.toggle("active", mode === "desc");
       $mobileModeTheory.classList.toggle("active", theory);
+      $theoryNavFast.classList.toggle("active", fast);
+      $theoryNavLearn.classList.toggle("active", mode === "learn");
+      $theoryNavDesc.classList.toggle("active", mode === "desc");
+      $theoryNavTheory.classList.toggle("active", theory);
       $mobileFastMinute.classList.toggle("active", fastVariant === "minute");
       $mobileFastClassic.classList.toggle("active", fastVariant === "classic");
       $mobileFastSudden.classList.toggle("active", fastVariant === "sudden");
@@ -2260,6 +2285,10 @@
       $mobileModeLearn.addEventListener("click", () => setMode("learn"));
       $mobileModeDesc.addEventListener("click", () => setMode("desc"));
       $mobileModeTheory.addEventListener("click", () => setMode("theory"));
+      $theoryNavFast.addEventListener("click", () => setMode("fast"));
+      $theoryNavLearn.addEventListener("click", () => setMode("learn"));
+      $theoryNavDesc.addEventListener("click", () => setMode("desc"));
+      $theoryNavTheory.addEventListener("click", () => setMode("theory"));
       $mobileFastMinute.addEventListener("click", () => setFastVariant("minute"));
       $mobileFastClassic.addEventListener("click", () => setFastVariant("classic"));
       $mobileFastSudden.addEventListener("click", () => setFastVariant("sudden"));

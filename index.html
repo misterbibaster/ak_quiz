@@ -1667,7 +1667,15 @@
 
     function openZoomView(src, title, description, images = []) {
       zoomImages = images.length ? [...images] : [src];
-      const srcIndex = zoomImages.indexOf(src);
+      const toAbsoluteUrl = (value) => {
+        try {
+          return new URL(value, window.location.href).href;
+        } catch {
+          return value;
+        }
+      };
+      const sourceUrl = toAbsoluteUrl(src);
+      const srcIndex = zoomImages.findIndex((item) => toAbsoluteUrl(item) === sourceUrl);
       zoomImageIndex = srcIndex >= 0 ? srcIndex : 0;
       $zoomImage.src = zoomImages[zoomImageIndex];
       $zoomImage.alt = title;

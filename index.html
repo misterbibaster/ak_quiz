@@ -835,14 +835,12 @@
       }
 
       .mobile-mode-top {
-        position: absolute;
-        left: 0;
-        width: auto;
-        min-width: 88px;
-        max-width: 44vw;
-        padding: 6px 10px;
-        font-size: .74rem;
-        z-index: 2;
+        position: fixed;
+        left: calc(6px + env(safe-area-inset-left));
+        right: calc(6px + env(safe-area-inset-right));
+        bottom: calc(6px + env(safe-area-inset-bottom));
+        z-index: 7;
+        min-height: 34px;
       }
 
       .mobile-mode-menu {
@@ -909,7 +907,7 @@
 
       .app.mobile-theory-scroll .content-shell {
         overflow: auto;
-        padding-bottom: 0;
+        padding-bottom: calc(62px + env(safe-area-inset-bottom));
         -webkit-overflow-scrolling: touch;
       }
 
@@ -1806,7 +1804,7 @@
       $mobileHintBtn.classList.toggle("hidden", fast || theory);
       $mobileModeTrigger.classList.toggle("hidden", !mobile);
       $mobileModeTop.classList.toggle("hidden", !(mobile && theory));
-      $mobileModeMenu.classList.toggle("from-top", mobile && theory);
+      $mobileModeMenu.classList.remove("from-top");
       $roundPill.classList.toggle("hidden", mobile);
       $mobileModeFast.classList.toggle("active", fast);
       $mobileModeLearn.classList.toggle("active", mode === "learn");

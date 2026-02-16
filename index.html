@@ -1302,6 +1302,7 @@
           <button class="fast-opt-btn" id="mobileFastClassic" type="button">25 побед</button>
           <button class="fast-opt-btn" id="mobileFastMinute" type="button">За минуту</button>
           <button class="fast-opt-btn" id="mobileFastSudden" type="button">До ошибки</button>
+          <button class="fast-opt-btn" id="mobileFastSpeed25" type="button">25 на скорость</button>
         </div>
       </div>
     </div>
@@ -1321,6 +1322,7 @@
           <button class="fast-opt-btn active" id="fastOptClassic" type="button">25 побед</button>
           <button class="fast-opt-btn" id="fastOptMinute" type="button">За минуту</button>
           <button class="fast-opt-btn" id="fastOptSudden" type="button">До ошибки</button>
+          <button class="fast-opt-btn" id="fastOptSpeed25" type="button">25 на скорость</button>
         </div>
         <section class="grid" id="answers"></section>
         <div class="wrong-hint" id="wrongHint"></div>
@@ -1632,6 +1634,7 @@
     const $fastOptMinute = document.getElementById("fastOptMinute");
     const $fastOptClassic = document.getElementById("fastOptClassic");
     const $fastOptSudden = document.getElementById("fastOptSudden");
+    const $fastOptSpeed25 = document.getElementById("fastOptSpeed25");
     const $timerPill = document.getElementById("timerPill");
     const $fastSummary = document.getElementById("fastSummary");
     const $fastSummaryTitle = document.getElementById("fastSummaryTitle");
@@ -1656,6 +1659,7 @@
     const $mobileFastMinute = document.getElementById("mobileFastMinute");
     const $mobileFastClassic = document.getElementById("mobileFastClassic");
     const $mobileFastSudden = document.getElementById("mobileFastSudden");
+    const $mobileFastSpeed25 = document.getElementById("mobileFastSpeed25");
     const $quizSection = document.getElementById("quizSection");
     const $theorySection = document.getElementById("theorySection");
     const $theoryControls = document.getElementById("theoryControls");
@@ -1698,6 +1702,9 @@
     let fastTimeoutId = null;
     let fastMinuteTimerId = null;
     let fastMinuteStarted = false;
+    let fastRaceTimerId = null;
+    let fastRaceStarted = false;
+    let fastRaceSeconds = 0;
     let fastRunActive = false;
     let fastNeedsKickoffTap = false;
     let fastElapsedAnswers = 0;
@@ -1718,7 +1725,8 @@
     const fastVariantLabelMap = {
       minute: "За минуту",
       classic: "25 побед",
-      sudden: "До ошибки"
+      sudden: "До ошибки",
+      speed25: "25 на скорость"
     };
 
     function randomInt(max) {
@@ -1978,6 +1986,7 @@
       $mobileFastMinute.classList.toggle("active", fastVariant === "minute");
       $mobileFastClassic.classList.toggle("active", fastVariant === "classic");
       $mobileFastSudden.classList.toggle("active", fastVariant === "sudden");
+      $mobileFastSpeed25.classList.toggle("active", fastVariant === "speed25");
       const label = fast
         ? (fastVariantLabelMap[fastVariant] || modeLabelMap.fast)
         : (modeLabelMap[mode] || "Обучающий");
@@ -2031,6 +2040,31 @@
         fastMinuteTimerId = null;
       }
       fastMinuteStarted = false;
+    }
+
+    function formatClock(totalSeconds) {
+      const safe = Math.max(0, Math.floor(totalSeconds));
+      const mm = String(Math.floor(safe / 60)).padStart(2, "0");
+      const ss = String(safe % 60).padStart(2, "0");
+      return `${mm}:${ss}`;
+    }
+
+    function stopFastRaceTimer() {
+      if (fastRaceTimerId !== null) {
+        clearInterval(fastRaceTimerId);
+        fastRaceTimerId = null;
+      }
+      fastRaceStarted = false;
+    }
+
+    function startFastRaceTimerIfNeeded() {
+      if (fastRaceStarted) return;
+      fastRaceStarted = true;
+      fastRaceTimerId = setInterval(() => {
+        fastRaceSeconds += 1;
+        const timerEl = document.getElementById("timer");
+        if (timerEl) timerEl.textContent = formatClock(fastRaceSeconds);
+      }, 1000);
     }
 
     function startQuestionTimer() {
@@ -2087,6 +2121,7 @@
       $fastOptMinute.classList.toggle("active", fastVariant === "minute");
       $fastOptClassic.classList.toggle("active", fastVariant === "classic");
       $fastOptSudden.classList.toggle("active", fastVariant === "sudden");
+      $fastOptSpeed25.classList.toggle("active", fastVariant === "speed25");
       syncMobileControls();
       if (mode === "fast") {
         startFastRun();
@@ -2097,6 +2132,7 @@
       stopFastTimer();
       stopFastTimeout();
       stopFastMinuteTimer();
+      stopFastRaceTimer();
     }
 
     function updateScorePill() {
@@ -2176,6 +2212,11 @@
         fastTimeLeft = FAST_MINUTE_SECONDS;
         fastNeedsKickoffTap = false;
         $timerPill.innerHTML = 'До конца: <span id="timer">60</span>с';
+      } else if (fastVariant === "speed25") {
+        fastRaceSeconds = 0;
+        fastRaceStarted = false;
+        fastNeedsKickoffTap = false;
+        $timerPill.innerHTML = 'Время: <span id="timer">00:00</span>';
       } else {
         fastNeedsKickoffTap = true;
         $timerPill.innerHTML = 'Таймер: <span id="timer">7</span>с';
@@ -2270,7 +2311,7 @@
 
       if (mode === "fast") {
         if (!fastRunActive) return;
-        if (fastVariant !== "minute" && fastNeedsKickoffTap) {
+        if (fastVariant !== "minute" && fastVariant !== "speed25" && fastNeedsKickoffTap) {
           fastNeedsKickoffTap = false;
         }
         if (fastVariant === "minute") {
@@ -2296,6 +2337,29 @@
               if (fastRunActive) nextQuestion();
             }, ANSWER_FEEDBACK_MS);
           }
+          return;
+        }
+
+        if (fastVariant === "speed25") {
+          startFastRaceTimerIfNeeded();
+          fastElapsedAnswers += 1;
+          if (!timedOut && clickedCorrect) {
+            score += 1;
+          }
+          updateScorePill();
+
+          if (score >= FAST_CLASSIC_TARGET) {
+            const averageSeconds = fastRaceSeconds / FAST_CLASSIC_TARGET;
+            const tone = averageSeconds <= 5 ? "ok" : (averageSeconds > 7 ? "bad" : "warn");
+            const payload = getClassicSummaryPayload(tone === "ok" ? 95 : (tone === "warn" ? 80 : 60));
+            finishFastRun(payload.title, payload.text, payload.tone, `Время: ${formatClock(fastRaceSeconds)}`);
+            $fastSummaryTheory.classList.toggle("hidden", !payload.showTheoryButton);
+            return;
+          }
+
+          fastTimeoutId = setTimeout(() => {
+            if (fastRunActive) nextQuestion();
+          }, ANSWER_FEEDBACK_MS);
           return;
         }
 
@@ -2450,6 +2514,8 @@
           } else {
             startQuestionTimer();
           }
+        } else if (fastVariant === "speed25") {
+          // Stopwatch starts on first answer tap
         } else {
           // minute mode has only global timer
         }
@@ -2485,6 +2551,7 @@
       $mobileFastMinute.addEventListener("click", () => setFastVariant("minute"));
       $mobileFastClassic.addEventListener("click", () => setFastVariant("classic"));
       $mobileFastSudden.addEventListener("click", () => setFastVariant("sudden"));
+      $mobileFastSpeed25.addEventListener("click", () => setFastVariant("speed25"));
       $hintBtn.addEventListener("click", openTheoryModal);
       $theoryClose.addEventListener("click", closeTheoryModal);
       $theoryEdgeLeft.addEventListener("click", closeTheoryModal);
@@ -2529,6 +2596,7 @@
       $fastOptMinute.addEventListener("click", () => setFastVariant("minute"));
       $fastOptClassic.addEventListener("click", () => setFastVariant("classic"));
       $fastOptSudden.addEventListener("click", () => setFastVariant("sudden"));
+      $fastOptSpeed25.addEventListener("click", () => setFastVariant("speed25"));
       $fastSummaryRestart.addEventListener("click", () => {
         if (mode === "fast") startFastRun();
       });
@@ -2574,7 +2642,7 @@
       $mobileModeMenu.addEventListener("click", (event) => {
         event.stopPropagation();
       });
-      [$mobileModeFast, $mobileModeLearn, $mobileModeDesc, $mobileModeTheory, $mobileFastMinute, $mobileFastClassic, $mobileFastSudden].forEach((el) => {
+      [$mobileModeFast, $mobileModeLearn, $mobileModeDesc, $mobileModeTheory, $mobileFastMinute, $mobileFastClassic, $mobileFastSudden, $mobileFastSpeed25].forEach((el) => {
         el.addEventListener("click", () => {
           if (isMobileViewport()) closeMobileModeMenu();
         });

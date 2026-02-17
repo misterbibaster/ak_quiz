@@ -1747,6 +1747,7 @@
     let fastElapsedAnswers = 0;
     let fastTimeLeft = FAST_ROUND_SECONDS;
     let mobileFastChooserExpanded = false;
+    const imagePreloadCache = new Map();
     let zoomImages = [];
     let zoomImageIndex = 0;
     let zoomTouchStartX = null;
@@ -1804,6 +1805,54 @@
         return weapon.images;
       }
       return [weapon.image];
+    }
+
+    function preloadImage(src) {
+      if (!src) return Promise.resolve();
+      if (imagePreloadCache.has(src)) return imagePreloadCache.get(src);
+      const promise = new Promise((resolve) => {
+        const img = new Image();
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          resolve();
+        };
+        img.onload = finish;
+        img.onerror = finish;
+        img.src = src;
+        if (img.complete) finish();
+      });
+      imagePreloadCache.set(src, promise);
+      return promise;
+    }
+
+    function preloadImages(sources) {
+      const unique = [...new Set((sources || []).filter(Boolean))];
+      unique.forEach((src) => {
+        preloadImage(src);
+      });
+    }
+
+    function prefetchNextRoundImages(excludeCorrectIndex = -1) {
+      if (weapons.length < 4) return;
+      let nextCorrectIndex = randomInt(weapons.length);
+      let guard = 0;
+      while (nextCorrectIndex === excludeCorrectIndex && guard < 20) {
+        nextCorrectIndex = randomInt(weapons.length);
+        guard += 1;
+      }
+      const wrongIndexes = sampleUniqueIndexes(3, nextCorrectIndex);
+      const nextOptionIndexes = shuffle([nextCorrectIndex, ...wrongIndexes]);
+      const sources = [];
+      for (const idx of nextOptionIndexes) {
+        const weaponImages = getWeaponImages(weapons[idx]);
+        if (weaponImages.length) {
+          const cursor = weaponImageCursor.get(idx) ?? 0;
+          sources.push(weaponImages[cursor % weaponImages.length]);
+        }
+      }
+      preloadImages(sources);
     }
 
     function escapeHtml(text) {
@@ -2543,7 +2592,7 @@
           const imageSrc = optionImageByIndex.get(idx) || weapon.image;
 
           card.innerHTML = `
-            <img src="${imageSrc}" alt="${weapon.name}" loading="lazy" />
+            <img src="${imageSrc}" alt="${weapon.name}" loading="eager" decoding="async" />
             <div class="card-wrong-overlay">${weapon.name}</div>
           `;
 
@@ -2554,6 +2603,9 @@
           $answers.appendChild(card);
         }
       }
+
+      // Background preload for likely next round without blocking current render.
+      prefetchNextRoundImages(correctIndex);
 
       if (mode === "fast") {
         if (fastVariant === "classic" || fastVariant === "sudden") {
@@ -2575,6 +2627,20 @@
       $question.textContent = "Нужно минимум 4 элемента в базе";
     } else {
       buildTheorySection();
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").then((reg) => {
+            const uniqueAssets = [...new Set(weapons.flatMap((weapon) => getWeaponImages(weapon)))];
+            const sendWarmup = () => {
+              if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: "warmup-assets", assets: uniqueAssets });
+              }
+            };
+            if (reg.active) sendWarmup();
+            navigator.serviceWorker.ready.then(sendWarmup).catch(() => {});
+          }).catch(() => {});
+        });
+      }
       setFastVariant("classic");
       $modeFast.addEventListener("click", () => setMode("fast"));
       $modeLearn.addEventListener("click", () => setMode("learn"));
